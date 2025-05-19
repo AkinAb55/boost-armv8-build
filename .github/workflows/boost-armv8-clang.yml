@@ -55,7 +55,6 @@ jobs:
             --build-dir=../boost_armv8_clang_build \
             --user-config=$HOME/user-config.jam \
             --with-filesystem \
-            --with-log_setup \
             --with-log \
             --with-serialization \
             --with-system \
