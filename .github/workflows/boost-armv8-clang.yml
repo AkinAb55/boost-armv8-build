@@ -21,25 +21,20 @@ jobs:
           sudo apt-get install -y \
             clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             wget bzip2 tar build-essential \
-            libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross libmvec1-arm64-cross \
+            libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross \
             pkg-config
 
       - name: Ensure ARM64 runtime libraries are present
         run: |
           set -e
-          # Ensure all required ARM64 libs are present
-          for so in libm.so.6 libmvec.so.1 libgcc_s.so.1 libc.so.6 libstdc++.so.6; do
-            if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
-              echo "=== Мissing $so, extracting from deb packages ==="
-              sudo apt-get download libc6-arm64-cross libmvec1-arm64-cross libgcc-s1-arm64-cross libstdc++6-arm64-cross || true
-              for deb in *.deb; do
-                ar x $deb
-                sudo tar -xvf data.tar.* "./usr/aarch64-linux-gnu/lib/$so" -C / || true
-                rm -f $deb control.tar.* data.tar.* debian-binary
-              done
-            fi
+          # Скачать deb-файлы для ручного извлечения so
+          sudo apt-get download libc6-arm64-cross libgcc-s1-arm64-cross libstdc++6-arm64-cross
+          for deb in *.deb; do
+            ar x $deb
+            sudo tar -xvf data.tar.* ./usr/aarch64-linux-gnu/lib/ -C / || true
+            rm -f $deb control.tar.* data.tar.* debian-binary
           done
-          # Проверка наличия всех so-файлов
+          # Проверка наличия so-файлов
           for so in libm.so.6 libmvec.so.1 libgcc_s.so.1 libc.so.6 libstdc++.so.6; do
             if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
               echo "::error file=/usr/aarch64-linux-gnu/lib/$so::ARM64 runtime $so not found!"
