@@ -30,7 +30,12 @@ jobs:
             ./usr/lib/aarch64-linux-gnu/librt.so.1 \
             ./usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/* /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libc.so.6 /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libm.so.6 /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libmvec.so.1 /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libpthread.so.0 /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/librt.so.1 /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1 /usr/aarch64-linux-gnu/lib/
           ls -lh /usr/aarch64-linux-gnu/lib/
           file /usr/aarch64-linux-gnu/lib/libm.so.6
 
