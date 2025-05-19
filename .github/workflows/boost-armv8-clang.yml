@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8 (Clang, Ananbox compatible)
+name: Build Boost for ARMv8/ARMv9 (Clang, Ananbox compatible)
 
 on:
   workflow_dispatch:
@@ -24,26 +24,19 @@ jobs:
             libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross \
             pkg-config
 
-      - name: Ensure ARM64 runtime libraries are present
+      - name: Manually fetch missing ARM64 libraries (libm.so.6, libmvec.so.1, libc.so.6)
         run: |
-          set -e
-          # Скачать deb-файлы для ручного извлечения so
-          sudo apt-get download libc6-arm64-cross libgcc-s1-arm64-cross libstdc++6-arm64-cross
-          for deb in *.deb; do
-            ar x $deb
-            sudo tar -xvf data.tar.* ./usr/aarch64-linux-gnu/lib/ -C / || true
-            rm -f $deb control.tar.* data.tar.* debian-binary
-          done
-          # Проверка наличия so-файлов
-          for so in libm.so.6 libmvec.so.1 libgcc_s.so.1 libc.so.6 libstdc++.so.6; do
-            if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
-              echo "::error file=/usr/aarch64-linux-gnu/lib/$so::ARM64 runtime $so not found!"
-              exit 1
-            fi
-          done
-          # Исправление linker script если нужно
+          # Скачиваем deb-файл с Ubuntu 22.04 или более старой Ubuntu (там есть все нужные so)
+          wget http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-arm64-cross_2.35-0ubuntu3cross1_all.deb
+          ar x libc6-arm64-cross_2.35-0ubuntu3cross1_all.deb
+          sudo tar -xvf data.tar.xz ./usr/aarch64-linux-gnu/lib/libm.so.6 -C /
+          sudo tar -xvf data.tar.xz ./usr/aarch64-linux-gnu/lib/libmvec.so.1 -C /
+          sudo tar -xvf data.tar.xz ./usr/aarch64-linux-gnu/lib/libc.so.6 -C /
+          ls -l /usr/aarch64-linux-gnu/lib/libm.so.6 || (echo "libm.so.6 missing!" && exit 1)
+          ls -l /usr/aarch64-linux-gnu/lib/libmvec.so.1 || (echo "libmvec.so.1 missing!" && exit 1)
+          ls -l /usr/aarch64-linux-gnu/lib/libc.so.6 || (echo "libc.so.6 missing!" && exit 1)
+          # Проверка и исправление linker script (libm.so)
           if [ -f /usr/aarch64-linux-gnu/lib/libm.so ] && ! file /usr/aarch64-linux-gnu/lib/libm.so | grep -q "ELF"; then
-            # libm.so is linker script, ensure it points to existing libm.so.6
             grep -q "libm.so.6" /usr/aarch64-linux-gnu/lib/libm.so || \
               echo "INPUT (libm.so.6)" | sudo tee /usr/aarch64-linux-gnu/lib/libm.so
           fi
@@ -62,12 +55,12 @@ jobs:
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for ARMv8 (Clang, Ananbox compatible)
+      - name: Build Boost for ARMv8/ARMv9 (Clang, Ananbox compatible)
         working-directory: ./boost_1_83_0
         run: |
           set -e
           ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
+            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a+crc -fPIC -std=c++14" \
             linkflags="--target=aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld" \
             variant=release \
             threading=multi \
