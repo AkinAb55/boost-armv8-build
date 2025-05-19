@@ -16,20 +16,46 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -e
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu wget bzip2 tar build-essential libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross
+          sudo apt-get install -y \
+            clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            wget bzip2 tar build-essential \
+            libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross libmvec1-arm64-cross \
+            pkg-config
 
       - name: Ensure ARM64 runtime libraries are present
         run: |
-          if [ ! -f /usr/aarch64-linux-gnu/lib/libm.so.6 ]; then
-            sudo apt-get download libc6-arm64-cross
-            ar x libc6-arm64-cross*.deb
-            sudo tar -xvf data.tar.xz ./usr/aarch64-linux-gnu/lib/libm.so.6 -C /
+          set -e
+          # Ensure all required ARM64 libs are present
+          for so in libm.so.6 libmvec.so.1 libgcc_s.so.1 libc.so.6 libstdc++.so.6; do
+            if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
+              echo "=== Мissing $so, extracting from deb packages ==="
+              sudo apt-get download libc6-arm64-cross libmvec1-arm64-cross libgcc-s1-arm64-cross libstdc++6-arm64-cross || true
+              for deb in *.deb; do
+                ar x $deb
+                sudo tar -xvf data.tar.* "./usr/aarch64-linux-gnu/lib/$so" -C / || true
+                rm -f $deb control.tar.* data.tar.* debian-binary
+              done
+            fi
+          done
+          # Проверка наличия всех so-файлов
+          for so in libm.so.6 libmvec.so.1 libgcc_s.so.1 libc.so.6 libstdc++.so.6; do
+            if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
+              echo "::error file=/usr/aarch64-linux-gnu/lib/$so::ARM64 runtime $so not found!"
+              exit 1
+            fi
+          done
+          # Исправление linker script если нужно
+          if [ -f /usr/aarch64-linux-gnu/lib/libm.so ] && ! file /usr/aarch64-linux-gnu/lib/libm.so | grep -q "ELF"; then
+            # libm.so is linker script, ensure it points to existing libm.so.6
+            grep -q "libm.so.6" /usr/aarch64-linux-gnu/lib/libm.so || \
+              echo "INPUT (libm.so.6)" | sudo tee /usr/aarch64-linux-gnu/lib/libm.so
           fi
 
       - name: Download Boost
         run: |
-          wget https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
+          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
       - name: Prepare user-config.jam (Clang + ARMv8 + Ananbox compatible)
@@ -44,6 +70,7 @@ jobs:
       - name: Build Boost for ARMv8 (Clang, Ananbox compatible)
         working-directory: ./boost_1_83_0
         run: |
+          set -e
           ./b2 toolset=clang-arm \
             cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
             linkflags="--target=aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld" \
@@ -61,6 +88,10 @@ jobs:
             --with-thread \
             --with-program_options \
             install -j$(nproc)
+
+      - name: Diagnostics (list built libs)
+        run: |
+          find boost_armv8_clang_install -type f
 
       - name: Package Boost artifacts
         run: |
