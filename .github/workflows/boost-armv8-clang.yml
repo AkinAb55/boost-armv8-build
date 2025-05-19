@@ -1,0 +1,58 @@
+name: Build Boost for ARMv8 (Clang)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-boost-armv8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu wget bzip2 tar build-essential
+
+      - name: Download Boost
+        run: |
+          wget https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
+          tar -xf boost_1_83_0.tar.bz2
+
+      - name: Prepare user-config.jam
+        run: |
+          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu ;" > $HOME/user-config.jam
+
+      - name: Bootstrap Boost.Build
+        working-directory: ./boost_1_83_0
+        run: |
+          ./bootstrap.sh --with-toolset=clang
+
+      - name: Build Boost for ARMv8 (Clang)
+        working-directory: ./boost_1_83_0
+        run: |
+          ./b2 toolset=clang-arm \
+            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC" \
+            linkflags="--target=aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld" \
+            variant=release \
+            threading=multi \
+            link=static,shared \
+            runtime-link=shared \
+            --prefix=../boost_armv8_clang_install \
+            --build-dir=../boost_armv8_clang_build \
+            --user-config=$HOME/user-config.jam \
+            install -j$(nproc)
+
+      - name: Package Boost artifacts
+        run: |
+          tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
+
+      - name: Upload Boost artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boost_armv8_clang
+          path: boost_armv8_clang.tar.gz
