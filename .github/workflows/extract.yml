@@ -1,0 +1,45 @@
+name: Extract glibc libraries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install zstd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zstd
+
+      - name: Verify data.tar.zst exists
+        run: |
+          if [ ! -f "data.tar.zst" ]; then
+            echo "Error: data.tar.zst not found in repository root"
+            exit 1
+          fi
+
+      - name: Extract data.tar.zst
+        run: |
+          zstd -d data.tar.zst -o data.tar
+          tar -xvf data.tar
+          mkdir -p ./usr/aarch64-linux-gnu/lib
+          cp ./usr/lib/aarch64-linux-gnu/libm.so.6 ./usr/aarch64-linux-gnu/lib/
+          cp ./usr/lib/aarch64-linux-gnu/libmvec.so.1 ./usr/aarch64-linux-gnu/lib/
+          # Copy all .so files for full glibc
+          cp ./usr/lib/aarch64-linux-gnu/*.so* ./usr/aarch64-linux-gnu/lib/
+          ls -l ./usr/aarch64-linux-gnu/lib/
+
+      - name: Archive extracted libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: glibc-arm64-libs
+          path: ./usr/aarch64-linux-gnu/lib/
