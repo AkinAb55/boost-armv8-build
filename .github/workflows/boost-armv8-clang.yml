@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8/ARMv9 (Clang, Ananbox compatible)
+name: Build Boost for ARMv8 (Clang, ARM64 sysroot .so from archive)
 
 on:
   workflow_dispatch:
@@ -16,70 +16,30 @@ jobs:
 
       - name: Install dependencies
         run: |
-          set -e
           sudo apt-get update
-          sudo apt-get install -y \
-            clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            wget bzip2 tar build-essential \
-            libc6-arm64-cross libstdc++6-arm64-cross libgcc-s1-arm64-cross \
-            pkg-config zstd
+          sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu zstd wget bzip2 tar build-essential
 
-      - name: Manually fetch missing ARM64 libraries (Ubuntu + Debian fallback)
+      - name: Extract ARM64 .so libs from data.tar.zst
         run: |
-          set -e
-          download_and_extract() {
-            local url="$1"
-            local debfile=$(basename "$url")
-            wget -nv "$url" -O "$debfile" || return 1
-            ar x "$debfile"
-            # Определяем имя data архива
-            data_archive=""
-            for ext in xz zst gz bz2; do
-              if [ -f "data.tar.$ext" ]; then
-                data_archive="data.tar.$ext"
-                break
-              fi
-            done
-            if [ -z "$data_archive" ]; then
-              echo "No data archive in $debfile!"
-              return 1
-            fi
-            # Распаковываем библиотеки, если они есть
-            for so in libm.so.6 libmvec.so.1 libc.so.6; do
-              sudo tar --wildcards --keep-old-files --extract -f "$data_archive" "./usr/aarch64-linux-gnu/lib/$so" -C / || true
-            done
-            rm -f "$debfile" control.tar.* data.tar.* debian-binary
-          }
+          mkdir -p /tmp/arm64libs
+          tar --use-compress-program=unzstd -xf data.tar.zst -C /tmp/arm64libs \
+            ./usr/lib/aarch64-linux-gnu/libc.so.6 \
+            ./usr/lib/aarch64-linux-gnu/libm.so.6 \
+            ./usr/lib/aarch64-linux-gnu/libmvec.so.1 \
+            ./usr/lib/aarch64-linux-gnu/libpthread.so.0 \
+            ./usr/lib/aarch64-linux-gnu/librt.so.1 \
+            ./usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+          sudo mkdir -p /usr/aarch64-linux-gnu/lib/
+          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/* /usr/aarch64-linux-gnu/lib/
+          ls -lh /usr/aarch64-linux-gnu/lib/
+          file /usr/aarch64-linux-gnu/lib/libm.so.6
 
-          # Пробуем Ubuntu
-          download_and_extract "http://archive.ubuntu.com/ubuntu/pool/main/c/cross-toolchain-base/libc6-arm64-cross_2.39-0ubuntu8cross1_all.deb" || true
-          # Пробуем Debian
-          download_and_extract "http://deb.debian.org/debian/pool/main/c/cross-toolchain-base/libc6-arm64-cross_2.41-6cross2_all.deb" || true
-
-          # Проверка наличия библиотек
-          for so in libm.so.6 libmvec.so.1 libc.so.6; do
-            if [ ! -f /usr/aarch64-linux-gnu/lib/$so ]; then
-              echo "ERROR: /usr/aarch64-linux-gnu/lib/$so missing!"
-              exit 1
-            fi
-          done
-
-          # Проверка и исправление linker script (libm.so)
-          if [ -f /usr/aarch64-linux-gnu/lib/libm.so ] && ! file /usr/aarch64-linux-gnu/lib/libm.so | grep -q "ELF"; then
-            grep -q "libm.so.6" /usr/aarch64-linux-gnu/lib/libm.so || \
-              echo "INPUT (libm.so.6)" | sudo tee /usr/aarch64-linux-gnu/lib/libm.so
-          fi
-
-          ls -l /usr/aarch64-linux-gnu/lib/libm.so.6
-          ls -l /usr/aarch64-linux-gnu/lib/libmvec.so.1
-          ls -l /usr/aarch64-linux-gnu/lib/libc.so.6
-
-      - name: Download Boost
+      - name: Download Boost source
         run: |
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
-      - name: Prepare user-config.jam (Clang + ARMv8 + Ananbox compatible)
+      - name: Prepare user-config.jam for Clang ARM
         run: |
           echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu ;" > $HOME/user-config.jam
 
@@ -88,10 +48,9 @@ jobs:
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for ARMv8/ARMv9 (Clang, Ananbox compatible)
+      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot)
         working-directory: ./boost_1_83_0
         run: |
-          set -e
           ./b2 toolset=clang-arm \
             cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
             linkflags="--target=aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld" \
