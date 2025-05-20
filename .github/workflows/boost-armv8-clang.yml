@@ -1,10 +1,9 @@
-name: Build Boost for ARMv8 (Clang, ARM64 sysroot .so from repo)
+name: Build Boost for ARMv8 (Clang, ARM64, ananbox-compatible, extra safe)
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-boost-armv8:
@@ -14,18 +13,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (dev, cross, all toolchains)
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross g++-aarch64-linux-gnu libstdc++-13-dev-arm64-cross wget bzip2 tar build-essential
+          sudo apt-get install -y \
+            clang llvm lld \
+            binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
+            g++-aarch64-linux-gnu g++-13-aarch64-linux-gnu \
+            libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross \
+            gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
+            wget bzip2 tar build-essential
 
-      - name: Verify ARM64 stdc++ headers presence
+      - name: Diagnostics: check ARM64 C++ headers and atomic
         run: |
-          echo "C++ ARM64 std headers:" >> errors.txt
-          ls /usr/aarch64-linux-gnu/include/c++/ >> errors.txt
-          ls /usr/aarch64-linux-gnu/include/c++/*/aarch64-linux-gnu/ >> errors.txt
+          echo "=== Checking ARM64 stdc++ headers and atomic support ==="
+          ls -l /usr/aarch64-linux-gnu/include/c++/13/ || true
+          ls -l /usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu/ || true
+          head -n 10 /usr/aarch64-linux-gnu/include/c++/13/cstddef || true
+          ls -l /usr/aarch64-linux-gnu/include/c++/13/atomic || true
+          echo "=== Checking existence of common STL headers ==="
+          for hdr in cstddef exception ostream fstream atomic set thread; do
+            if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then
+              echo "ERROR: missing $hdr"
+              exit 1
+            fi
+          done
 
-      - name: Copy ARM64 .so libs from repo to sysroot
+      - name: Copy ARM64 .so libs from repo to sysroot (if present)
         run: |
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
           if [ -d "usr/aarch64-linux-gnu/lib" ]; then
@@ -37,29 +51,35 @@ jobs:
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
-      - name: Prepare user-config.jam for Clang ARM
+      - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain)
         run: |
-          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu ;" > $HOME/user-config.jam
+          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ ;" > $HOME/user-config.jam
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot)
+      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, all safe flags)
         working-directory: ./boost_1_83_0
         run: |
           STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
           INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
           ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 $INCFLAGS" \
-            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -L/usr/aarch64-linux-gnu/lib" \
+            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++14 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2" \
+            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib" \
+            target-os=linux \
+            address-model=64 \
+            architecture=arm \
+            stdlib=libstdc++ \
+            threadapi=pthread \
             variant=release \
             threading=multi \
             link=static,shared \
             runtime-link=shared \
             --prefix=../boost_armv8_clang_install \
             --build-dir=../boost_armv8_clang_build \
+            --layout=system \
             --user-config=$HOME/user-config.jam \
             --with-filesystem \
             --with-log \
@@ -68,6 +88,12 @@ jobs:
             --with-thread \
             --with-program_options \
             -d+2 install -j$(nproc)
+
+      - name: Diagnostics: check built Boost libs
+        if: always()
+        run: |
+          echo "=== Built Boost libs ==="
+          find ../boost_armv8_clang_install -type f || true
 
       - name: Package Boost artifacts
         if: success()
