@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8 (Clang, ARM64 sysroot .so from archive)
+name: Build Boost for ARMv8 (Clang, ARM64 sysroot .so from repo)
 
 on:
   workflow_dispatch:
@@ -17,25 +17,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu zstd wget bzip2 tar build-essential
+          sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu wget bzip2 tar build-essential
 
-      - name: Extract ARM64 .so libs from data.tar.zst
+      - name: Copy ARM64 .so libs from repo to sysroot
         run: |
-          mkdir -p /tmp/arm64libs
-          tar --use-compress-program=unzstd -xf data.tar.zst -C /tmp/arm64libs \
-            ./usr/lib/aarch64-linux-gnu/libc.so.6 \
-            ./usr/lib/aarch64-linux-gnu/libm.so.6 \
-            ./usr/lib/aarch64-linux-gnu/libmvec.so.1 \
-            ./usr/lib/aarch64-linux-gnu/libpthread.so.0 \
-            ./usr/lib/aarch64-linux-gnu/librt.so.1 \
-            ./usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libc.so.6 /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libm.so.6 /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libmvec.so.1 /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/libpthread.so.0 /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/librt.so.1 /usr/aarch64-linux-gnu/lib/
-          sudo cp /tmp/arm64libs/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/libc.so.6 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/libm.so.6 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/libmvec.so.1 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/libpthread.so.0 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/librt.so.1 /usr/aarch64-linux-gnu/lib/
+          sudo cp usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /usr/aarch64-linux-gnu/lib/
           ls -lh /usr/aarch64-linux-gnu/lib/
           file /usr/aarch64-linux-gnu/lib/libm.so.6
 
