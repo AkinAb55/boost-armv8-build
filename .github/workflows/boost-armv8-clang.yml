@@ -19,17 +19,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang llvm lld gcc-aarch64-linux-gnu g++-aarch64-linux-gnu wget bzip2 tar build-essential
 
+      - name: Verify .so files in repository
+        run: |
+          echo "Checking .so files in repository..." > errors.txt
+          if [ -d "usr/aarch64-linux-gnu/lib" ]; then
+            ls -lh usr/aarch64-linux-gnu/lib/ >> errors.txt
+            echo "File format check:" >> errors.txt
+            file usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
+            file usr/aarch64-linux-gnu/lib/libmvec.so.1 >> errors.txt 2>&1
+          else
+            echo "Directory usr/aarch64-linux-gnu/lib not found in repository!" >> errors.txt
+          fi
+
       - name: Copy ARM64 .so libs from repo to sysroot
         run: |
+          echo "Copying .so files to sysroot..." >> errors.txt
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/libc.so.6 /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/libm.so.6 /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/libmvec.so.1 /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/libpthread.so.0 /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/librt.so.1 /usr/aarch64-linux-gnu/lib/
-          sudo cp usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /usr/aarch64-linux-gnu/lib/
-          ls -lh /usr/aarch64-linux-gnu/lib/
-          file /usr/aarch64-linux-gnu/lib/libm.so.6
+          if [ -d "usr/aarch64-linux-gnu/lib" ]; then
+            sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/ >> errors.txt 2>&1
+            echo "Listing sysroot lib directory..." >> errors.txt
+            ls -lh /usr/aarch64-linux-gnu/lib/ >> errors.txt
+            echo "Checking libm.so.6 format..." >> errors.txt
+            file /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
+            echo "Checking libm.so.6 dependencies..." >> errors.txt
+            ldd /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
+          else
+            echo "No .so files to copy: usr/aarch64-linux-gnu/lib does not exist!" >> errors.txt
+          fi
 
       - name: Download Boost source
         run: |
@@ -50,10 +66,10 @@ jobs:
         run: |
           ./b2 toolset=clang-arm \
             cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
-            linkflags="--target=aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld" \
+            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld -L/usr/aarch64-linux-gnu/lib" \
             variant=release \
             threading=multi \
-            link=static,shared \
+            link=static \
             runtime-link=shared \
             --prefix=../boost_armv8_clang_install \
             --build-dir=../boost_armv8_clang_build \
@@ -64,18 +80,28 @@ jobs:
             --with-system \
             --with-thread \
             --with-program_options \
-            install -j$(nproc)
+            install -j$(nproc) >> errors.txt 2>&1 || { echo "Build failed. See errors.txt for details."; exit 1; }
 
       - name: Diagnostics (list built libs)
+        if: success()
         run: |
           find boost_armv8_clang_install -type f
 
       - name: Package Boost artifacts
+        if: success()
         run: |
           tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
 
       - name: Upload Boost artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: boost_armv8_clang
           path: boost_armv8_clang.tar.gz
+
+      - name: Upload error log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-errors
+          path: errors.txt
