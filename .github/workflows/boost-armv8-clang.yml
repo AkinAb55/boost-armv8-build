@@ -1,4 +1,4 @@
-name: Build Boost for Android (bionic, arm64-v8a, ananbox compatible)
+name: Build Boost, talloc, proot for Android ARM64 (bionic, ananbox compatible)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  build-boost-android-arm64:
+  build-all:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies (host tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git autoconf automake libtool pkg-config
 
       - name: Download and extract Android NDK (r26c)
         run: |
@@ -29,12 +29,13 @@ jobs:
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
+      # --- BOOST ---
       - name: Download Boost source
         run: |
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
-      - name: Prepare user-config.jam for Android (bionic, arm64-v8a)
+      - name: Prepare user-config.jam for Boost (Android arm64-v8a)
         run: |
           ANDROID_API=21
           NDK_HOME="$HOME/android-ndk"
@@ -46,7 +47,7 @@ jobs:
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for Android arm64-v8a (bionic)
+      - name: Build Boost for Android arm64-v8a (bionic, only needed libs)
         working-directory: ./boost_1_83_0
         env:
           ANDROID_API: 21
@@ -55,8 +56,8 @@ jobs:
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           ./b2 toolset=clang-android \
-            cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++17 -fvisibility=hidden" \
-            linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined" \
+            cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
+            linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
             target-os=android \
             address-model=64 \
             architecture=arm \
@@ -71,29 +72,104 @@ jobs:
             --build-dir=../boost_android_arm64_build \
             --layout=system \
             --user-config=$HOME/user-config.jam \
+            --with-crc \
+            --with-date_time \
+            --with-dll \
             --with-filesystem \
+            --with-interprocess \
             --with-log \
             --with-program_options \
+            --with-range \
+            --with-regex \
             --with-serialization \
+            --with-signals2 \
             --with-system \
             --with-thread \
+            --with-uuid \
             -d+2 install -j$(nproc)
-
-      - name: Diagnostics check built Boost libs
-        if: always()
-        run: |
-          echo "=== Built Boost libs for Android ==="
-          find ../boost_android_arm64_install -type f || true
-          file ../boost_android_arm64_install/lib/* || true
 
       - name: Package Boost artifacts
         if: success()
         run: |
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
+      # --- TALLOC ---
+      - name: Download and extract talloc
+        run: |
+          wget https://download.samba.org/pub/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
+          tar -xf talloc-2.4.1.tar.gz
+
+      - name: Patch talloc cross-build (disable python, gettext, rpath)
+        working-directory: ./talloc-2.4.1
+        run: |
+          sed -i 's/--enable-python/--disable-python/g' wscript
+          sed -i 's/--with-gettext/--without-gettext/g' wscript
+
+      - name: Configure and build talloc for Android arm64-v8a
+        run: |
+          export ANDROID_API=21
+          export NDK_HOME="$HOME/android-ndk"
+          export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
+          export AR="$TOOLCHAIN/llvm-ar"
+          export RANLIB="$TOOLCHAIN/llvm-ranlib"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+          cd talloc-2.4.1
+          ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath CC=$CC AR=$AR RANLIB=$RANLIB CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          make -j$(nproc)
+          make install
+
+      - name: Package talloc artifacts
+        if: success()
+        run: |
+          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.1/install .
+
+      # --- PROOT ---
+      - name: Clone proot
+        run: |
+          git clone --depth=1 https://github.com/Ananbox/proot.git proot
+
+      - name: Build proot for Android arm64-v8a (with talloc)
+        run: |
+          export ANDROID_API=21
+          export NDK_HOME="$HOME/android-ndk"
+          export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
+          export AR="$TOOLCHAIN/llvm-ar"
+          export RANLIB="$TOOLCHAIN/llvm-ranlib"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.1/install/include"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.1/install/lib -ltalloc"
+          cd proot/src
+          make clean
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          cp -v proot $GITHUB_WORKSPACE/libproot.so
+
+      - name: Package proot artifacts
+        if: success()
+        run: |
+          tar -czvf proot_android_arm64.tar.gz libproot.so
+
+      # --- FINAL ARTIFACTS ---
       - name: Upload Boost artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: boost_android_arm64
           path: boost_android_arm64.tar.gz
+
+      - name: Upload talloc artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talloc_android_arm64
+          path: talloc_android_arm64.tar.gz
+
+      - name: Upload proot artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proot_android_arm64
+          path: proot_android_arm64.tar.gz
