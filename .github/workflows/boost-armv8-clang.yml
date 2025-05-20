@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8 (Clang, ARM64, ananbox-compatible, extra safe)
+name: Build Boost for ARMv8 (Clang, ARM64, extra safe)
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies (dev, cross, all toolchains)
+      - name: Install dependencies (cross, dev, toolchains)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,8 +43,50 @@ jobs:
         run: |
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
           if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/
+            set -e
+            for sofile in usr/aarch64-linux-gnu/lib/*.so*; do
+              sudo cp -av "$sofile" /usr/aarch64-linux-gnu/lib/ || (
+                fname=$(basename "$sofile")
+                echo "ERROR: Cannot copy $fname, trying to download..."
+                # Попытка скачать из публичных репозиториев Ubuntu
+                # (пример для libm и libmvec, для других нужно в явном виде добавить ссылки)
+                if [[ "$fname" == "libm.so.6" ]]; then
+                  wget -O /tmp/libm.so.6 http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb || exit 1
+                  ar x /tmp/libm.so.6 data.tar.zst
+                  tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/libm.so.6
+                  sudo cp -v ./lib/aarch64-linux-gnu/libm.so.6 /usr/aarch64-linux-gnu/lib/
+                elif [[ "$fname" == "libmvec.so.1" ]]; then
+                  wget -O /tmp/libmvec.so.1 http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb || exit 1
+                  ar x /tmp/libmvec.so.1 data.tar.zst
+                  tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/libmvec.so.1
+                  sudo cp -v ./lib/aarch64-linux-gnu/libmvec.so.1 /usr/aarch64-linux-gnu/lib/
+                else
+                  echo "Неизвестная библиотека: $fname. Добавь ссылку на скачивание вручную."
+                  exit 1
+                fi
+              )
+            done
           fi
+
+      - name: Patch sysroot copy host's real libm.so.6, libmvec.so.1 if missing
+        run: |
+          # Иногда в пакете только symlink, копируем настоящие .so, если нет
+          for lib in libm.so.6 libmvec.so.1; do
+            if [ ! -f /usr/aarch64-linux-gnu/lib/$lib ]; then
+              src=$(find /lib /usr/lib -name $lib | grep aarch64-linux-gnu | head -n1)
+              if [ -n "$src" ]; then
+                sudo cp -fv "$src" /usr/aarch64-linux-gnu/lib/
+              else
+                echo "ERROR: $lib not found on host, trying to download..."
+                # Попытка скачать из публичного репозитория Ubuntu
+                wget -O /tmp/$lib.deb http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb || exit 1
+                ar x /tmp/$lib.deb data.tar.zst
+                tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/$lib
+                sudo cp -v ./lib/aarch64-linux-gnu/$lib /usr/aarch64-linux-gnu/lib/
+              fi
+            fi
+          done
+          ls -l /usr/aarch64-linux-gnu/lib/libm*.so*
 
       - name: Download Boost source
         run: |
