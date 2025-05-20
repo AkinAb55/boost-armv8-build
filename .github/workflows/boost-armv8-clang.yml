@@ -16,13 +16,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo -e "\n=== Installing dependencies ===" >> errors.txt
+          echo -e "\n=== Installing dependencies ===" > errors.txt
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu wget bzip2 tar build-essential >> errors.txt 2>&1
+          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross wget bzip2 tar build-essential >> errors.txt 2>&1
 
       - name: Verify .so files in repository
         run: |
-          echo -e "\n=== Checking .so files in repository ===" > errors.txt
+          echo -e "\n=== Checking .so files in repository ===" >> errors.txt
           if [ -d "usr/aarch64-linux-gnu/lib" ]; then
             echo "Listing files in usr/aarch64-linux-gnu/lib/:" >> errors.txt
             ls -lh usr/aarch64-linux-gnu/lib/ >> errors.txt
@@ -46,20 +46,24 @@ jobs:
             file /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
             file /usr/aarch64-linux-gnu/lib/libmvec.so.1 >> errors.txt 2>&1
             file /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 >> errors.txt 2>&1
-            echo -e "\nChecking dependencies of libm.so.6 using aarch64-linux-gnu-ldd:" >> errors.txt
-            aarch64-linux-gnu-ldd --root=/usr/aarch64-linux-gnu /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1 || echo "ERROR: aarch64-linux-gnu-ldd failed to resolve dependencies for libm.so.6" >> errors.txt
+            echo -e "\nChecking dependencies of libm.so.6 using ld-linux-aarch64.so.1:" >> errors.txt
+            /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 --list /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1 || echo "ERROR: ld-linux-aarch64.so.1 failed to resolve dependencies for libm.so.6" >> errors.txt
           else
             echo "ERROR: No .so files to copy: usr/aarch64-linux-gnu/lib does not exist!" >> errors.txt
           fi
 
-      - name: Verify compiler and linker
+      - name: Verify compiler, linker, and tools
         run: |
-          echo -e "\n=== Verifying compiler and linker ===" >> errors.txt
+          echo -e "\n=== Verifying compiler, linker, and tools ===" >> errors.txt
           clang++ --version >> errors.txt 2>&1
-          lld --version >> errors.txt 2>&1
+          ld --version >> errors.txt 2>&1
           which clang++ >> errors.txt 2>&1
           echo -e "\nChecking if gcc is absent from PATH:" >> errors.txt
           which aarch64-linux-gnu-gcc >> errors.txt 2>&1 || echo "aarch64-linux-gnu-gcc not found, using clang++" >> errors.txt
+          echo -e "\nChecking availability of aarch64-linux-gnu-ldd:" >> errors.txt
+          which aarch64-linux-gnu-ldd >> errors.txt 2>&1 || echo "WARNING: aarch64-linux-gnu-ldd not found, using ld-linux-aarch64.so.1 for dependency check" >> errors.txt
+          echo -e "\nChecking library search paths:" >> errors.txt
+          clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -print-search-dirs >> errors.txt 2>&1
 
       - name: Download Boost source
         run: |
@@ -85,7 +89,7 @@ jobs:
           echo -e "\n=== Building Boost ===" >> ../errors.txt
           ./b2 toolset=clang-arm \
             cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
-            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -fuse-ld=lld -L/usr/aarch64-linux-gnu/lib" \
+            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -L/usr/aarch64-linux-gnu/lib" \
             variant=release \
             threading=multi \
             link=static,shared \
