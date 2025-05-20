@@ -1,0 +1,893 @@
+
+=== Installing dependencies ===
+Reading package lists...
+Building dependency tree...
+Reading state information...
+wget is already the newest version (1.21.4-1ubuntu4.1).
+bzip2 is already the newest version (1.0.8-5.1build0.1).
+tar is already the newest version (1.35+dfsg-3build1).
+The following additional packages will be installed:
+  cpp-13-aarch64-linux-gnu cpp-aarch64-linux-gnu g++-13-aarch64-linux-gnu
+  gcc-13-aarch64-linux-gnu gcc-13-aarch64-linux-gnu-base gcc-13-cross-base
+  gcc-14-cross-base gcc-aarch64-linux-gnu libasan8-arm64-cross
+  libatomic1-arm64-cross libc6-arm64-cross libgcc-13-dev-arm64-cross
+  libgcc-s1-arm64-cross libgomp1-arm64-cross libhwasan0-arm64-cross
+  libitm1-arm64-cross liblsan0-arm64-cross libstdc++-13-dev-arm64-cross
+  libstdc++6-arm64-cross libtsan2-arm64-cross libubsan1-arm64-cross
+  linux-libc-dev-arm64-cross llvm-runtime
+Suggested packages:
+  binutils-doc gcc-13-locales cpp-13-doc cpp-doc gcc-13-doc manpages-dev
+  gdb-aarch64-linux-gnu gcc-doc
+The following NEW packages will be installed:
+  binutils-aarch64-linux-gnu build-essential clang cpp-13-aarch64-linux-gnu
+  cpp-aarch64-linux-gnu g++-13-aarch64-linux-gnu g++-aarch64-linux-gnu
+  gcc-13-aarch64-linux-gnu gcc-13-aarch64-linux-gnu-base gcc-13-cross-base
+  gcc-14-cross-base gcc-aarch64-linux-gnu libasan8-arm64-cross
+  libatomic1-arm64-cross libc6-arm64-cross libc6-dev-arm64-cross
+  libgcc-13-dev-arm64-cross libgcc-s1-arm64-cross libgomp1-arm64-cross
+  libhwasan0-arm64-cross libitm1-arm64-cross liblsan0-arm64-cross
+  libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross libtsan2-arm64-cross
+  libubsan1-arm64-cross linux-libc-dev-arm64-cross lld llvm llvm-runtime
+0 upgraded, 30 newly installed, 0 to remove and 22 not upgraded.
+Need to get 60.0 MB of archives.
+After this operation, 234 MB of additional disk space will be used.
+Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+Get:2 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 build-essential amd64 12.10ubuntu1 [4928 B]
+Get:3 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 clang amd64 1:18.0-59~exp2 [5846 B]
+Get:4 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-aarch64-linux-gnu-base amd64 13.3.0-6ubuntu2~24.04cross1 [51.7 kB]
+Get:5 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [10.8 MB]
+Get:6 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 cpp-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5332 B]
+Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-aarch64-linux-gnu amd64 2.42-4ubuntu2.5 [3711 kB]
+Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-cross-base all 13.3.0-6ubuntu2~24.04cross1 [46.4 kB]
+Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-14-cross-base all 14.2.0-4ubuntu2~24.04cross1 [46.0 kB]
+Get:10 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-arm64-cross all 2.39-0ubuntu8cross1 [1197 kB]
+Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-s1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [61.9 kB]
+Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [110 kB]
+Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [31.5 kB]
+Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [11.4 kB]
+Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [524 kB]
+Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [238 kB]
+Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [500 kB]
+Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++6-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [658 kB]
+Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [219 kB]
+Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [303 kB]
+Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev-arm64-cross all 13.3.0-6ubuntu2~24.04cross1 [2616 kB]
+Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [21.1 MB]
+Get:23 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 linux-libc-dev-arm64-cross all 6.8.0-25.25cross1 [1375 kB]
+Get:24 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-dev-arm64-cross all 2.39-0ubuntu8cross1 [1629 kB]
+Get:25 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev-arm64-cross all 13.3.0-6ubuntu2~24.04cross1 [2657 kB]
+Get:26 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [12.2 MB]
+Get:27 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 gcc-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1210 B]
+Get:28 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 g++-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [962 B]
+Get:29 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 lld amd64 1:18.0-59~exp2 [5494 B]
+Get:30 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 llvm-runtime amd64 1:18.0-59~exp2 [5496 B]
+Get:31 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 llvm amd64 1:18.0-59~exp2 [4146 B]
+Fetched 60.0 MB in 2s (38.5 MB/s)
+Selecting previously unselected package build-essential.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 222694 files and directories currently installed.)
+Preparing to unpack .../00-build-essential_12.10ubuntu1_amd64.deb ...
+Unpacking build-essential (12.10ubuntu1) ...
+Selecting previously unselected package clang.
+Preparing to unpack .../01-clang_1%3a18.0-59~exp2_amd64.deb ...
+Unpacking clang (1:18.0-59~exp2) ...
+Selecting previously unselected package gcc-13-aarch64-linux-gnu-base:amd64.
+Preparing to unpack .../02-gcc-13-aarch64-linux-gnu-base_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+Unpacking gcc-13-aarch64-linux-gnu-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package cpp-13-aarch64-linux-gnu.
+Preparing to unpack .../03-cpp-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+Unpacking cpp-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package cpp-aarch64-linux-gnu.
+Preparing to unpack .../04-cpp-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking cpp-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package binutils-aarch64-linux-gnu.
+Preparing to unpack .../05-binutils-aarch64-linux-gnu_2.42-4ubuntu2.5_amd64.deb ...
+Unpacking binutils-aarch64-linux-gnu (2.42-4ubuntu2.5) ...
+Selecting previously unselected package gcc-13-cross-base.
+Preparing to unpack .../06-gcc-13-cross-base_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+Unpacking gcc-13-cross-base (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package gcc-14-cross-base.
+Preparing to unpack .../07-gcc-14-cross-base_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking gcc-14-cross-base (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libc6-arm64-cross.
+Preparing to unpack .../08-libc6-arm64-cross_2.39-0ubuntu8cross1_all.deb ...
+Unpacking libc6-arm64-cross (2.39-0ubuntu8cross1) ...
+Selecting previously unselected package libgcc-s1-arm64-cross.
+Preparing to unpack .../09-libgcc-s1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libgcc-s1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libgomp1-arm64-cross.
+Preparing to unpack .../10-libgomp1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libgomp1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libitm1-arm64-cross.
+Preparing to unpack .../11-libitm1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libitm1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libatomic1-arm64-cross.
+Preparing to unpack .../12-libatomic1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libatomic1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libasan8-arm64-cross.
+Preparing to unpack .../13-libasan8-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libasan8-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package liblsan0-arm64-cross.
+Preparing to unpack .../14-liblsan0-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking liblsan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libtsan2-arm64-cross.
+Preparing to unpack .../15-libtsan2-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libtsan2-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libstdc++6-arm64-cross.
+Preparing to unpack .../16-libstdc++6-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libstdc++6-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libubsan1-arm64-cross.
+Preparing to unpack .../17-libubsan1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libubsan1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libhwasan0-arm64-cross.
+Preparing to unpack .../18-libhwasan0-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+Unpacking libhwasan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Selecting previously unselected package libgcc-13-dev-arm64-cross.
+Preparing to unpack .../19-libgcc-13-dev-arm64-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+Unpacking libgcc-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package gcc-13-aarch64-linux-gnu.
+Preparing to unpack .../20-gcc-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+Unpacking gcc-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package linux-libc-dev-arm64-cross.
+Preparing to unpack .../21-linux-libc-dev-arm64-cross_6.8.0-25.25cross1_all.deb ...
+Unpacking linux-libc-dev-arm64-cross (6.8.0-25.25cross1) ...
+Selecting previously unselected package libc6-dev-arm64-cross.
+Preparing to unpack .../22-libc6-dev-arm64-cross_2.39-0ubuntu8cross1_all.deb ...
+Unpacking libc6-dev-arm64-cross (2.39-0ubuntu8cross1) ...
+Selecting previously unselected package libstdc++-13-dev-arm64-cross.
+Preparing to unpack .../23-libstdc++-13-dev-arm64-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+Unpacking libstdc++-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package g++-13-aarch64-linux-gnu.
+Preparing to unpack .../24-g++-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+Unpacking g++-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Selecting previously unselected package gcc-aarch64-linux-gnu.
+Preparing to unpack .../25-gcc-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking gcc-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package g++-aarch64-linux-gnu.
+Preparing to unpack .../26-g++-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+Unpacking g++-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Selecting previously unselected package lld:amd64.
+Preparing to unpack .../27-lld_1%3a18.0-59~exp2_amd64.deb ...
+Unpacking lld:amd64 (1:18.0-59~exp2) ...
+Selecting previously unselected package llvm-runtime:amd64.
+Preparing to unpack .../28-llvm-runtime_1%3a18.0-59~exp2_amd64.deb ...
+Unpacking llvm-runtime:amd64 (1:18.0-59~exp2) ...
+Selecting previously unselected package llvm.
+Preparing to unpack .../29-llvm_1%3a18.0-59~exp2_amd64.deb ...
+Unpacking llvm (1:18.0-59~exp2) ...
+Setting up lld:amd64 (1:18.0-59~exp2) ...
+Setting up binutils-aarch64-linux-gnu (2.42-4ubuntu2.5) ...
+Setting up gcc-14-cross-base (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up clang (1:18.0-59~exp2) ...
+Setting up gcc-13-cross-base (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up llvm-runtime:amd64 (1:18.0-59~exp2) ...
+Setting up libc6-arm64-cross (2.39-0ubuntu8cross1) ...
+Setting up llvm (1:18.0-59~exp2) ...
+Setting up libitm1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up linux-libc-dev-arm64-cross (6.8.0-25.25cross1) ...
+Setting up build-essential (12.10ubuntu1) ...
+Setting up gcc-13-aarch64-linux-gnu-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up libgcc-s1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libatomic1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up liblsan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libgomp1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up cpp-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up libhwasan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libc6-dev-arm64-cross (2.39-0ubuntu8cross1) ...
+Setting up libstdc++6-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up cpp-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up libasan8-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libtsan2-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libubsan1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+Setting up libgcc-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up gcc-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up libstdc++-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up g++-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+Setting up gcc-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Setting up g++-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.4) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+
+=== Checking .so files in repository ===
+Listing files in usr/aarch64-linux-gnu/lib/:
+total 3.2M
+-rwxr-xr-x 1 runner docker 200K May 20 10:16 ld-linux-aarch64.so.1
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libBrokenLocale.so.1
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libanl.so.1
+-rwxr-xr-x 1 runner docker 1.7M May 20 10:16 libc.so.6
+-rw-r--r-- 1 runner docker  71K May 20 10:16 libc_malloc_debug.so.0
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libdl.so.2
+-rw-r--r-- 1 runner docker 578K May 20 10:16 libm.so.6
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libmemusage.so
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libmvec.so.1
+-rw-r--r-- 1 runner docker 130K May 20 10:16 libnsl.so.1
+-rw-r--r-- 1 runner docker  67K May 20 10:16 libnss_compat.so.2
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libnss_dns.so.2
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libnss_files.so.2
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libnss_hesiod.so.2
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libpcprofile.so
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libpthread.so.0
+-rw-r--r-- 1 runner docker  67K May 20 10:16 libresolv.so.2
+-rw-r--r-- 1 runner docker  66K May 20 10:16 librt.so.1
+-rw-r--r-- 1 runner docker  67K May 20 10:16 libthread_db.so.1
+-rw-r--r-- 1 runner docker  66K May 20 10:16 libutil.so.1
+
+Checking format of key libraries:
+usr/aarch64-linux-gnu/lib/libm.so.6: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=8b91508cdd37eb0c6bf691a9670c64345db4d3e7, for GNU/Linux 3.7.0, stripped
+usr/aarch64-linux-gnu/lib/libmvec.so.1: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=9640acb09524f176100b0b979b24f92ef5a493bb, for GNU/Linux 3.7.0, stripped
+usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), static-pie linked, BuildID[sha1]=8c090caa0683408bed144e81074485c3d2abfdb0, stripped
+
+=== Copying .so files to sysroot ===
+'usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1' -> '/usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1'
+'usr/aarch64-linux-gnu/lib/libBrokenLocale.so.1' -> '/usr/aarch64-linux-gnu/lib/libBrokenLocale.so.1'
+'usr/aarch64-linux-gnu/lib/libanl.so.1' -> '/usr/aarch64-linux-gnu/lib/libanl.so.1'
+'usr/aarch64-linux-gnu/lib/libc.so.6' -> '/usr/aarch64-linux-gnu/lib/libc.so.6'
+'usr/aarch64-linux-gnu/lib/libc_malloc_debug.so.0' -> '/usr/aarch64-linux-gnu/lib/libc_malloc_debug.so.0'
+'usr/aarch64-linux-gnu/lib/libdl.so.2' -> '/usr/aarch64-linux-gnu/lib/libdl.so.2'
+'usr/aarch64-linux-gnu/lib/libm.so.6' -> '/usr/aarch64-linux-gnu/lib/libm.so.6'
+'usr/aarch64-linux-gnu/lib/libmemusage.so' -> '/usr/aarch64-linux-gnu/lib/libmemusage.so'
+'usr/aarch64-linux-gnu/lib/libmvec.so.1' -> '/usr/aarch64-linux-gnu/lib/libmvec.so.1'
+'usr/aarch64-linux-gnu/lib/libnsl.so.1' -> '/usr/aarch64-linux-gnu/lib/libnsl.so.1'
+'usr/aarch64-linux-gnu/lib/libnss_compat.so.2' -> '/usr/aarch64-linux-gnu/lib/libnss_compat.so.2'
+'usr/aarch64-linux-gnu/lib/libnss_dns.so.2' -> '/usr/aarch64-linux-gnu/lib/libnss_dns.so.2'
+'usr/aarch64-linux-gnu/lib/libnss_files.so.2' -> '/usr/aarch64-linux-gnu/lib/libnss_files.so.2'
+'usr/aarch64-linux-gnu/lib/libnss_hesiod.so.2' -> '/usr/aarch64-linux-gnu/lib/libnss_hesiod.so.2'
+'usr/aarch64-linux-gnu/lib/libpcprofile.so' -> '/usr/aarch64-linux-gnu/lib/libpcprofile.so'
+'usr/aarch64-linux-gnu/lib/libpthread.so.0' -> '/usr/aarch64-linux-gnu/lib/libpthread.so.0'
+'usr/aarch64-linux-gnu/lib/libresolv.so.2' -> '/usr/aarch64-linux-gnu/lib/libresolv.so.2'
+'usr/aarch64-linux-gnu/lib/librt.so.1' -> '/usr/aarch64-linux-gnu/lib/librt.so.1'
+'usr/aarch64-linux-gnu/lib/libthread_db.so.1' -> '/usr/aarch64-linux-gnu/lib/libthread_db.so.1'
+'usr/aarch64-linux-gnu/lib/libutil.so.1' -> '/usr/aarch64-linux-gnu/lib/libutil.so.1'
+
+Listing sysroot lib directory (/usr/aarch64-linux-gnu/lib/):
+total 23M
+-rw-r--r-- 1 root root  496 Apr 15  2024 Mcrt1.o
+-rw-r--r-- 1 root root 1.7K Apr 15  2024 Scrt1.o
+-rw-r--r-- 1 root root 2.0K Apr 15  2024 crt1.o
+-rw-r--r-- 1 root root 1.3K Apr 15  2024 crti.o
+-rw-r--r-- 1 root root  872 Apr 15  2024 crtn.o
+-rw-r--r-- 1 root root 2.8K Apr 15  2024 gcrt1.o
+-rw-r--r-- 1 root root 2.5K Apr 15  2024 grcrt1.o
+-rwxr-xr-x 1 root root 200K May 20 10:17 ld-linux-aarch64.so.1
+-rw-r--r-- 1 root root 1.9K Apr 15  2024 libBrokenLocale.a
+lrwxrwxrwx 1 root root   20 Apr 15  2024 libBrokenLocale.so -> libBrokenLocale.so.1
+-rw-r--r-- 1 root root  66K May 20 10:17 libBrokenLocale.so.1
+-rw-r--r-- 1 root root    8 Apr 15  2024 libanl.a
+lrwxrwxrwx 1 root root   11 Apr 15  2024 libanl.so -> libanl.so.1
+-rw-r--r-- 1 root root  66K May 20 10:17 libanl.so.1
+lrwxrwxrwx 1 root root   16 Sep 15  2024 libasan.so.8 -> libasan.so.8.0.0
+-rw-r--r-- 1 root root 2.8M Sep 15  2024 libasan.so.8.0.0
+lrwxrwxrwx 1 root root   18 Sep 15  2024 libatomic.so.1 -> libatomic.so.1.2.0
+-rw-r--r-- 1 root root  67K Sep 15  2024 libatomic.so.1.2.0
+-rw-r--r-- 1 root root 5.0M Apr 15  2024 libc.a
+-rw-r--r-- 1 root root  317 Apr 15  2024 libc.so
+-rwxr-xr-x 1 root root 1.7M May 20 10:17 libc.so.6
+lrwxrwxrwx 1 root root   22 Apr 15  2024 libc_malloc_debug.so -> libc_malloc_debug.so.0
+-rw-r--r-- 1 root root  71K May 20 10:17 libc_malloc_debug.so.0
+-rw-r--r-- 1 root root 5.3K Apr 15  2024 libc_nonshared.a
+-rw-r--r-- 1 root root    8 Apr 15  2024 libdl.a
+-rw-r--r-- 1 root root  66K May 20 10:17 libdl.so.2
+-rw-r--r-- 1 root root 1.2K Apr 15  2024 libg.a
+-rw-r--r-- 1 root root 131K Sep 15  2024 libgcc_s.so.1
+lrwxrwxrwx 1 root root   16 Sep 15  2024 libgomp.so.1 -> libgomp.so.1.0.0
+-rw-r--r-- 1 root root 452K Sep 15  2024 libgomp.so.1.0.0
+lrwxrwxrwx 1 root root   18 Sep 15  2024 libhwasan.so.0 -> libhwasan.so.0.0.0
+-rw-r--r-- 1 root root 1.5M Sep 15  2024 libhwasan.so.0.0.0
+lrwxrwxrwx 1 root root   15 Sep 15  2024 libitm.so.1 -> libitm.so.1.0.0
+-rw-r--r-- 1 root root 195K Sep 15  2024 libitm.so.1.0.0
+lrwxrwxrwx 1 root root   16 Sep 15  2024 liblsan.so.0 -> liblsan.so.0.0.0
+-rw-r--r-- 1 root root 1.1M Sep 15  2024 liblsan.so.0.0.0
+-rw-r--r-- 1 root root 1.4M Apr 15  2024 libm-2.39.a
+-rw-r--r-- 1 root root  141 Apr 15  2024 libm.a
+-rw-r--r-- 1 root root  157 Apr 15  2024 libm.so
+-rw-r--r-- 1 root root 578K May 20 10:17 libm.so.6
+-rw-r--r-- 1 root root 1.5K Apr 15  2024 libmcheck.a
+-rw-r--r-- 1 root root  66K May 20 10:17 libmemusage.so
+-rw-r--r-- 1 root root 143K Apr 15  2024 libmvec.a
+lrwxrwxrwx 1 root root   12 Apr 15  2024 libmvec.so -> libmvec.so.1
+-rw-r--r-- 1 root root  66K May 20 10:17 libmvec.so.1
+-rw-r--r-- 1 root root 130K May 20 10:17 libnsl.so.1
+lrwxrwxrwx 1 root root   18 Apr 15  2024 libnss_compat.so -> libnss_compat.so.2
+-rw-r--r-- 1 root root  67K May 20 10:17 libnss_compat.so.2
+-rw-r--r-- 1 root root  66K May 20 10:17 libnss_dns.so.2
+-rw-r--r-- 1 root root  66K May 20 10:17 libnss_files.so.2
+lrwxrwxrwx 1 root root   18 Apr 15  2024 libnss_hesiod.so -> libnss_hesiod.so.2
+-rw-r--r-- 1 root root  66K May 20 10:17 libnss_hesiod.so.2
+-rw-r--r-- 1 root root  66K May 20 10:17 libpcprofile.so
+-rw-r--r-- 1 root root    8 Apr 15  2024 libpthread.a
+-rw-r--r-- 1 root root  66K May 20 10:17 libpthread.so.0
+-rw-r--r-- 1 root root    8 Apr 15  2024 libpthread_nonshared.a
+-rw-r--r-- 1 root root  82K Apr 15  2024 libresolv.a
+lrwxrwxrwx 1 root root   14 Apr 15  2024 libresolv.so -> libresolv.so.2
+-rw-r--r-- 1 root root  67K May 20 10:17 libresolv.so.2
+-rw-r--r-- 1 root root    8 Apr 15  2024 librt.a
+-rw-r--r-- 1 root root  66K May 20 10:17 librt.so.1
+lrwxrwxrwx 1 root root   19 Sep 15  2024 libstdc++.so.6 -> libstdc++.so.6.0.33
+-rw-r--r-- 1 root root 3.2M Sep 15  2024 libstdc++.so.6.0.33
+lrwxrwxrwx 1 root root   17 Apr 15  2024 libthread_db.so -> libthread_db.so.1
+-rw-r--r-- 1 root root  67K May 20 10:17 libthread_db.so.1
+lrwxrwxrwx 1 root root   16 Sep 15  2024 libtsan.so.2 -> libtsan.so.2.0.0
+-rw-r--r-- 1 root root 2.5M Sep 15  2024 libtsan.so.2.0.0
+lrwxrwxrwx 1 root root   17 Sep 15  2024 libubsan.so.1 -> libubsan.so.1.0.0
+-rw-r--r-- 1 root root 940K Sep 15  2024 libubsan.so.1.0.0
+-rw-r--r-- 1 root root    8 Apr 15  2024 libutil.a
+-rw-r--r-- 1 root root  66K May 20 10:17 libutil.so.1
+-rw-r--r-- 1 root root 1.8K Apr 15  2024 rcrt1.o
+
+Checking format of key libraries in sysroot:
+/usr/aarch64-linux-gnu/lib/libm.so.6: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=8b91508cdd37eb0c6bf691a9670c64345db4d3e7, for GNU/Linux 3.7.0, stripped
+/usr/aarch64-linux-gnu/lib/libmvec.so.1: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=9640acb09524f176100b0b979b24f92ef5a493bb, for GNU/Linux 3.7.0, stripped
+/usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), static-pie linked, BuildID[sha1]=8c090caa0683408bed144e81074485c3d2abfdb0, stripped
+
+=== Verifying compiler, linker, and tools ===
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+GNU ld (GNU Binutils for Ubuntu) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) a later version.
+This program has absolutely no warranty.
+/usr/bin/clang++
+
+Checking if gcc is absent from PATH:
+/usr/bin/aarch64-linux-gnu-gcc
+
+Checking library search paths:
+programs: =/usr/bin:/usr/lib/llvm-18/bin:/usr/bin/../lib/gcc-cross/aarch64-linux-gnu/13/../../../../aarch64-linux-gnu/bin
+libraries: =/usr/lib/llvm-18/lib/clang/18:/usr/bin/../lib/gcc-cross/aarch64-linux-gnu/13:/usr/bin/../lib/gcc-cross/aarch64-linux-gnu/13/../../../../aarch64-linux-gnu/lib:/usr/aarch64-linux-gnu/lib
+
+Checking for ARM64 stdc++ headers:
+13
+
+=== Downloading Boost source ===
+2025-05-20 10:17:57 URL:https://phoenixnap.dl.sourceforge.net/project/boost/boost/1.83.0/boost_1_83_0.tar.bz2?viasf=1 [122892751/122892751] -> "boost_1_83_0.tar.bz2" [1]
+
+=== Preparing user-config.jam ===
+using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu ;
+
+=== Bootstrapping Boost.Build ===
+Building B2 engine..
+
+###
+###
+### Using 'clang' toolset.
+###
+###
+
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+
+###
+###
+
+> clang++ -x c++ -std=c++11 -O3 -s -Wno-deprecated-declarations -DNDEBUG builtins.cpp class.cpp command.cpp compile.cpp constants.cpp cwd.cpp debug.cpp debugger.cpp execcmd.cpp execnt.cpp execunix.cpp filesys.cpp filent.cpp fileunix.cpp frames.cpp function.cpp glob.cpp hash.cpp hcache.cpp hdrmacro.cpp headers.cpp jam_strings.cpp jam.cpp jamgram.cpp lists.cpp make.cpp make1.cpp md5.cpp mem.cpp modules.cpp native.cpp object.cpp option.cpp output.cpp parse.cpp pathnt.cpp pathsys.cpp pathunix.cpp regexp.cpp rules.cpp scan.cpp search.cpp startup.cpp subst.cpp sysinfo.cpp timestamp.cpp variable.cpp w32_getreg.cpp modules/order.cpp modules/path.cpp modules/property-set.cpp modules/regex.cpp modules/sequence.cpp modules/set.cpp -o b2
+tools/build/src/engine/b2
+Detecting Python version... 3.12
+Detecting Python root... /usr
+Unicode/ICU support for Boost.Regex?... /usr
+Generating B2 configuration in project-config.jam for clang...
+
+Bootstrapping is done. To build, run:
+
+    ./b2
+    
+To generate header files, run:
+
+    ./b2 headers
+
+The configuration generated uses clang to build by default. If that is
+unintended either use the --with-toolset option or adjust configuration, by
+editing 'project-config.jam'.
+
+Further information:
+
+   - Command line help:
+     ./b2 --help
+     
+   - Getting started guide: 
+     http://www.boost.org/more/getting_started/unix-variants.html
+     
+   - B2 documentation:
+     http://www.boost.org/build/
+
+
+=== Building Boost ===
+ERROR: Build failed
+    - has -Wl,-undefined,error : no [3]
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+clang-linux.compile.c++ ../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/error_code.o
+    "clang++" "-target" "aarch64-linux-gnu" "--sysroot=/usr/aarch64-linux-gnu"   -fvisibility-inlines-hidden -pthread -O3 -Wall -fvisibility=hidden -Wno-inline --target=arm64-pc-linux -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 -I/usr/aarch64-linux-gnu/include/c++/13 -I/usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu -DBOOST_ALL_NO_LIB=1 -DBOOST_SYSTEM_STATIC_LINK=1 -DNDEBUG   -I"."  -c -o "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/error_code.o" "libs/system/src/error_code.cpp"
+    "ar"  rsc "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/libboost_system.a" "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/error_code.o"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/xpressive/regex_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/xpressive/regex_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/xpressive/regex_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/get_last_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/winapi/get_last_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/get_last_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/winapi/error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/error_codes.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/winapi/error_codes.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/winapi/error_codes.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/uuid/entropy_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/uuid/entropy_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/uuid/entropy_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/error_types.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/url/error_types.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/error_types.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/url/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/windows_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/windows_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/windows_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/is_error_condition_enum.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/is_error_condition_enum.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/is_error_condition_enum.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/linux_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/linux_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/linux_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/is_error_code_enum.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/is_error_code_enum.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/is_error_code_enum.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_condition.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/error_condition.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_condition.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_category.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/error_category.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/error_category.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/cygwin_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/cygwin_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/cygwin_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/qvm/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/qvm/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/qvm/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/python/errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/python/errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/python/errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/program_options/errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/program_options/errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/program_options/errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/throw_on_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/throw_on_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/throw_on_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_with_diagnostics.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/error_with_diagnostics.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_with_diagnostics.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_categories.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/error_categories.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/error_categories.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/multi_index/safe_mode_errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/multi_index/safe_mode_errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/multi_index/safe_mode_errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mpi/error_string.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mpi/error_string.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mpi/error_string.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/unless_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/unless_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/unless_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/transform_error_message.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/transform_error_message.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/transform_error_message.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/transform_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/transform_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/transform_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/is_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/is_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/is_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/define_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/define_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/define_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/debug_parsing_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/debug_parsing_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/debug_parsing_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/change_error_message.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/change_error_message.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/change_error_message.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/locale/encoding_errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/locale/encoding_errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/locale/encoding_errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/on_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/leaf/on_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/on_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/handle_errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/leaf/handle_errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/handle_errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/leaf/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/leaf/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/json/system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/json/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/interprocess/errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/interprocess/errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/interprocess/errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/get_error_info.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/exception/get_error_info.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/get_error_info.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/error_info.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/exception/error_info.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/error_info.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/enable_error_info.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/exception/enable_error_info.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/enable_error_info.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/redirect_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/redirect_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/redirect_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/wave/grammars/cpp_value_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/wave/grammars/cpp_value_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/wave/grammars/cpp_value_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/url/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/grammar/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/url/grammar/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/grammar/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/thread/futures/future_error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/thread/futures/future_error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/thread/futures/future_error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/thread/futures/future_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/thread/futures/future_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/thread/futures/future_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_condition.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/detail/error_condition.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_condition.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/detail/error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_category_impl.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/detail/error_category_impl.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_category_impl.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_category.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/system/detail/error_category.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/system/detail/error_category.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/include/classic_error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/include/classic_error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/include/classic_error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/regex/v4/error_type.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/regex/v4/error_type.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/regex/v4/error_type.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/regex/v5/error_type.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/regex/v5/error_type.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/regex/v5/error_type.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/json_parser/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/property_tree/json_parser/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/json_parser/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/xml_parser_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/property_tree/detail/xml_parser_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/xml_parser_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/info_parser_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/property_tree/detail/info_parser_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/info_parser_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/file_parser_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/property_tree/detail/file_parser_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/property_tree/detail/file_parser_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/detail/throw_on_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/detail/throw_on_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/detail/throw_on_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/preprocessor/debug/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/preprocessor/debug/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/preprocessor/debug/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/policy/result_error_code_throw_as_system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/policy/result_error_code_throw_as_system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/policy/result_error_code_throw_as_system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/policy/outcome_error_code_throw_as_system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/policy/outcome_error_code_throw_as_system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/policy/outcome_error_code_throw_as_system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/detail/trait_std_error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/detail/trait_std_error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/detail/trait_std_error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/detail/basic_result_error_observers.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/detail/basic_result_error_observers.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/detail/basic_result_error_observers.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/error_categories.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/impl/error_categories.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/error_categories.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/detail/throw_on_error_loc.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/detail/throw_on_error_loc.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/detail/throw_on_error_loc.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/unless_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/unless_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/unless_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/transform_error_message.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/transform_error_message.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/transform_error_message.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/transform_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/transform_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/transform_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/is_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/is_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/is_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/define_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/define_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/define_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/debug_parsing_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/debug_parsing_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/debug_parsing_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/change_error_message.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/change_error_message.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/change_error_message.hpp"
+common.mkdir /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error
+        mkdir -p "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/whitespace_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/whitespace_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/whitespace_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unexpected_end_of_input.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/unexpected_end_of_input.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unexpected_end_of_input.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unpaired.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/unpaired.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unpaired.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unexpected_character.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/unexpected_character.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/unexpected_character.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/none_of_the_expected_cases_found.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/none_of_the_expected_cases_found.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/none_of_the_expected_cases_found.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/literal_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/literal_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/literal_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/letter_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/letter_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/letter_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/index_out_of_range.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/index_out_of_range.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/index_out_of_range.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/end_of_input_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/end_of_input_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/end_of_input_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/digit_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/error/digit_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/error/digit_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/math/policies/error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/math/policies/error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/math/policies/error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/json/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/json/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/json/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/iostreams/detail/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/iostreams/detail/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/iostreams/detail/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/gil/io/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/gil/io/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/gil/io/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/detail/error_info_impl.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/exception/detail/error_info_impl.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/exception/detail/error_info_impl.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/get_last_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/detail/winapi/get_last_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/get_last_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/detail/winapi/error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/error_codes.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/detail/winapi/error_codes.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/detail/winapi/error_codes.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/dll/detail/system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/dll/detail/system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/dll/detail/system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/unsupported_extension_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/compute/exception/unsupported_extension_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/unsupported_extension_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/opencl_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/compute/exception/opencl_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/opencl_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/context_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/compute/exception/context_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compute/exception/context_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compat/detail/throw_system_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/compat/detail/throw_system_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/compat/detail/throw_system_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/callable_traits/detail/sfinae_errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/callable_traits/detail/sfinae_errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/callable_traits/detail/sfinae_errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/websocket/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/zlib/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/core/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/http/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/traits/set_error_member.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/traits/set_error_member.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/traits/set_error_member.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/traits/set_error_free.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/traits/set_error_free.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/traits/set_error_free.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/ssl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/ssl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/ssl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/experimental/channel_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/experimental/channel_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/experimental/channel_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/impl/redirect_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/impl/redirect_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/impl/redirect_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/set_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/execution/set_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/set_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/receiver_invocation_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/execution/receiver_invocation_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/receiver_invocation_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/detail/throw_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/detail/throw_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/detail/throw_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/with_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/accumulators/statistics/with_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/with_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/error_of_mean.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/accumulators/statistics/error_of_mean.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/error_of_mean.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/error_of.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/accumulators/statistics/error_of.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/accumulators/statistics/error_of.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/grammar/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/url/grammar/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/url/grammar/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/test/utils/runtime/errors.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/test/utils/runtime/errors.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/test/utils/runtime/errors.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/classic/error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/throw_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/detail/throw_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/throw_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/last_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/detail/last_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/last_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/detail/traits/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/detail/traits/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/detail/traits/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/util/odeint_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/numeric/odeint/util/odeint_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/util/odeint_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/explicit_error_generic_rk.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/numeric/odeint/stepper/explicit_error_generic_rk.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/explicit_error_generic_rk.hpp"
+common.mkdir /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error
+        mkdir -p "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/whitespace_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/whitespace_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/whitespace_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unpaired.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/unpaired.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unpaired.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unexpected_end_of_input.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/unexpected_end_of_input.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unexpected_end_of_input.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unexpected_character.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/unexpected_character.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/unexpected_character.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/none_of_the_expected_cases_found.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/none_of_the_expected_cases_found.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/none_of_the_expected_cases_found.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/letter_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/letter_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/letter_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/literal_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/literal_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/literal_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/index_out_of_range.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/index_out_of_range.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/index_out_of_range.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/expected_to_fail.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/expected_to_fail.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/expected_to_fail.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/end_of_input_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/end_of_input_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/end_of_input_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/digit_expected.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/metaparse/v1/error/digit_expected.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/metaparse/v1/error/digit_expected.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/math/distributions/detail/common_error_handling.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/math/distributions/detail/common_error_handling.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/math/distributions/detail/common_error_handling.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/bimap/detail/debug/static_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/bimap/detail/debug/static_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/bimap/detail/debug/static_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/zlib/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/zlib/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/zlib/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/websocket/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/websocket/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/websocket/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/http/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/http/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/http/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/core/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/core/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/core/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/_experimental/test/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/ssl/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/ssl/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/ssl/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/experimental/impl/channel_error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/experimental/impl/channel_error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/experimental/impl/channel_error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/impl/receiver_invocation_error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/execution/impl/receiver_invocation_error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/execution/impl/receiver_invocation_error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/detail/impl/throw_error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/asio/detail/impl/throw_error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/asio/detail/impl/throw_error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/qi/nonterminal/error_handler.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/qi/nonterminal/error_handler.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/qi/nonterminal/error_handler.hpp"
+common.mkdir /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling
+        mkdir -p "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/typeof.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/classic/error_handling/typeof.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/typeof.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/exceptions_fwd.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/classic/error_handling/exceptions_fwd.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/exceptions_fwd.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/exceptions.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/classic/error_handling/exceptions.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/exceptions.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/impl/throw_error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/detail/impl/throw_error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/impl/throw_error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/impl/last_error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/process/v2/detail/impl/last_error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/process/v2/detail/impl/last_error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/system_error2.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/system_error2.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/system_error2.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/std_error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/std_error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/std_error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/status_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/status_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/status_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/errored_status_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/errored_status_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/errored_status_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/boost_error_code.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/outcome/experimental/status-code/status-code/boost_error_code.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/outcome/experimental/status-code/status-code/boost_error_code.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/base/explicit_error_stepper_fsal_base.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/numeric/odeint/stepper/base/explicit_error_stepper_fsal_base.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/base/explicit_error_stepper_fsal_base.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/base/explicit_error_stepper_base.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/numeric/odeint/stepper/base/explicit_error_stepper_base.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/numeric/odeint/stepper/base/explicit_error_stepper_base.hpp"
+common.mkdir /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error
+        mkdir -p "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error/server_error_to_string.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/impl/internal/error/server_error_to_string.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error/server_error_to_string.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error/server_error_to_string.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/mysql/impl/internal/error/server_error_to_string.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/mysql/impl/internal/error/server_error_to_string.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/local_function/aux_/preprocessor/traits/decl_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/local_function/aux_/preprocessor/traits/decl_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/local_function/aux_/preprocessor/traits/decl_error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/impl/error.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/_experimental/test/impl/error.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/impl/error.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/impl/error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/beast/_experimental/test/impl/error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/beast/_experimental/test/impl/error.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/x3/support/utility/error_reporting.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/x3/support/utility/error_reporting.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/x3/support/utility/error_reporting.hpp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/support/detail/lexer/runtime_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/support/detail/lexer/runtime_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/support/detail/lexer/runtime_error.hpp"
+common.mkdir /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/impl
+        mkdir -p "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/impl"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/impl/exceptions.ipp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/spirit/home/classic/error_handling/impl/exceptions.ipp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/spirit/home/classic/error_handling/impl/exceptions.ipp"
+common.copy /home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/local_function/aux_/preprocessor/traits/decl_/set_error.hpp
+    cp "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_1_83_0/boost/local_function/aux_/preprocessor/traits/decl_/set_error.hpp"  "/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/include/boost/local_function/aux_/preprocessor/traits/decl_/set_error.hpp"
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+clang-linux.compile.c++ ../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/codecvt_error_category.o
+    "clang++" "-target" "aarch64-linux-gnu" "--sysroot=/usr/aarch64-linux-gnu"   -fvisibility-inlines-hidden -pthread -O3 -Wall -fvisibility=hidden -Wno-inline --target=arm64-pc-linux -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 -I/usr/aarch64-linux-gnu/include/c++/13 -I/usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu -DBOOST_ALL_NO_LIB=1 -DBOOST_ATOMIC_STATIC_LINK=1 -DBOOST_FILESYSTEM_HAS_DIRENT_D_TYPE -DBOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW -DBOOST_FILESYSTEM_HAS_INIT_PRIORITY -DBOOST_FILESYSTEM_HAS_POSIX_AT_APIS -DBOOST_FILESYSTEM_HAS_STATX -DBOOST_FILESYSTEM_HAS_STAT_ST_BLKSIZE -DBOOST_FILESYSTEM_HAS_STAT_ST_MTIM -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_FILESYSTEM_SOURCE -DBOOST_FILESYSTEM_STATIC_LINK=1 -DNDEBUG   -I"." -I"libs/filesystem/src"  -c -o "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/codecvt_error_category.o" "libs/filesystem/src/codecvt_error_category.cpp"
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+  list(APPEND __boost_skipped "${fname} (${reason})")
+  if(__boost_skipped)
+    foreach(s IN LISTS __boost_skipped)
+  unset(__boost_skipped)
+unset(__boost_skipped)
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_atomic.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_atomic.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_atomic.so.1.83.0...
+    "ar"  rsc "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/libboost_filesystem.a" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/codecvt_error_category.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/exception.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/directory.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/operations.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/path.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/path_traits.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/portability.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/unique_path.o" "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/link-static/threading-multi/visibility-hidden/utf8_codecvt_facet.o"
+clang-linux.compile.c++ ../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden/codecvt_error_category.o
+    "clang++" "-target" "aarch64-linux-gnu" "--sysroot=/usr/aarch64-linux-gnu"   -fvisibility-inlines-hidden -fPIC -pthread -O3 -Wall -fvisibility=hidden -Wno-inline --target=arm64-pc-linux -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 -I/usr/aarch64-linux-gnu/include/c++/13 -I/usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu -DBOOST_ALL_NO_LIB=1 -DBOOST_ATOMIC_DYN_LINK=1 -DBOOST_FILESYSTEM_DYN_LINK=1 -DBOOST_FILESYSTEM_HAS_DIRENT_D_TYPE -DBOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW -DBOOST_FILESYSTEM_HAS_INIT_PRIORITY -DBOOST_FILESYSTEM_HAS_POSIX_AT_APIS -DBOOST_FILESYSTEM_HAS_STATX -DBOOST_FILESYSTEM_HAS_STAT_ST_BLKSIZE -DBOOST_FILESYSTEM_HAS_STAT_ST_MTIM -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_FILESYSTEM_SOURCE -DNDEBUG   -I"." -I"libs/filesystem/src"  -c -o "../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden/codecvt_error_category.o" "libs/filesystem/src/codecvt_error_category.cpp"
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_atomic-1.83.0>libboost_atomic-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_filesystem.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_filesystem.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_filesystem.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_filesystem-1.83.0>libboost_filesystem-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem-variant-shared.cmake...
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_chrono.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/chrono/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_chrono.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_chrono.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_chrono.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/thread/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_thread.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/atomic/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_atomic.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_thread.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/thread/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_thread.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_thread.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_thread.so.1.83.0...
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_regex.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/regex/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_regex.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_regex.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_regex.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/filesystem/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_filesystem.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_log-1.83.0>libboost_log-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/chrono/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_chrono-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/chrono/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_chrono.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_chrono-1.83.0>libboost_chrono-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/chrono/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_chrono-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/regex/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_regex-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/regex/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_regex.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_regex-1.83.0>libboost_regex-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/regex/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_regex-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/thread/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_thread-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/thread/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_thread.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_thread-1.83.0>libboost_thread-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/thread/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_thread-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log_setup.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log_setup.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log_setup.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log_setup.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_log_setup.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log_setup-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log_setup.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_log_setup-1.83.0>libboost_log_setup-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/log/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_log_setup-variant-shared.cmake...
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_program_options.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/program_options/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_program_options.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_program_options.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_program_options.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/program_options/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_program_options-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/program_options/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_program_options.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_program_options-1.83.0>libboost_program_options-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/program_options/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_program_options-variant-shared.cmake...
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_serialization.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_serialization.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_serialization.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_serialization.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_serialization-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_serialization.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_serialization-1.83.0>libboost_serialization-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_serialization-variant-shared.cmake...
+clang-linux.compile.c++ ../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden/error_code.o
+    "clang++" "-target" "aarch64-linux-gnu" "--sysroot=/usr/aarch64-linux-gnu"   -fvisibility-inlines-hidden -fPIC -pthread -O3 -Wall -fvisibility=hidden -Wno-inline --target=arm64-pc-linux -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 -I/usr/aarch64-linux-gnu/include/c++/13 -I/usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu -DBOOST_ALL_NO_LIB=1 -DBOOST_SYSTEM_DYN_LINK=1 -DNDEBUG   -I"."  -c -o "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden/error_code.o" "libs/system/src/error_code.cpp"
+    "clang++" "-target" "aarch64-linux-gnu" "--sysroot=/usr/aarch64-linux-gnu"    -o "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden/libboost_system.so.1.83.0" -Wl,-soname -Wl,"libboost_system.so.1.83.0" -shared -Wl,--start-group "../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden/error_code.o"  -Wl,-Bstatic  -Wl,-Bdynamic -lrt -Wl,--end-group -fPIC -pthread -fvisibility=hidden -fvisibility-inlines-hidden --target=arm64-pc-linux -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -L/usr/aarch64-linux-gnu/lib
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_system.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_system.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_system.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_system.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_system-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_system.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_system-1.83.0>libboost_system-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/system/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_system-variant-shared.cmake...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_wserialization.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_serialization.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_wserialization.so.1.83.0 for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_wserialization.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_wserialization.so for lack of <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib>libboost_wserialization.so.1.83.0...
+...skipped <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_wserialization-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_wserialization.so.1.83.0...
+...skipped <p/home/runner/work/boost-armv8-build/boost-armv8-build/boost_armv8_clang_install/lib/cmake/boost_wserialization-1.83.0>libboost_wserialization-variant-shared.cmake for lack of <p../boost_armv8_clang_build/boost/bin.v2/libs/serialization/build/clang-linux-arm/release/threading-multi/visibility-hidden>libboost_wserialization-variant-shared.cmake...
+...failed updating 6 targets...
