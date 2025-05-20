@@ -89,7 +89,7 @@ jobs:
           --with-program_options \
           -d+2 install -j$(nproc)
 
-    - name: Diagnostics: check built Boost libs
+    - name: Diagnostics check built Boost libs
       if: always()
       run: |
         echo "=== Built Boost libs ==="
