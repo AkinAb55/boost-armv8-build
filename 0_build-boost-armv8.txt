@@ -1,0 +1,181 @@
+﻿2025-05-20T17:26:38.4926664Z Current runner version: '2.324.0'
+2025-05-20T17:26:38.4949703Z ##[group]Operating System
+2025-05-20T17:26:38.4950587Z Ubuntu
+2025-05-20T17:26:38.4951047Z 24.04.2
+2025-05-20T17:26:38.4951513Z LTS
+2025-05-20T17:26:38.4952029Z ##[endgroup]
+2025-05-20T17:26:38.4952544Z ##[group]Runner Image
+2025-05-20T17:26:38.4953105Z Image: ubuntu-24.04
+2025-05-20T17:26:38.4953686Z Version: 20250511.1.0
+2025-05-20T17:26:38.4954696Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250511.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-05-20T17:26:38.4956286Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250511.1
+2025-05-20T17:26:38.4957245Z ##[endgroup]
+2025-05-20T17:26:38.4957800Z ##[group]Runner Image Provisioner
+2025-05-20T17:26:38.4958540Z 2.0.437.1
+2025-05-20T17:26:38.4959022Z ##[endgroup]
+2025-05-20T17:26:38.4960068Z ##[group]GITHUB_TOKEN Permissions
+2025-05-20T17:26:38.4962378Z Contents: read
+2025-05-20T17:26:38.4963026Z Metadata: read
+2025-05-20T17:26:38.4963661Z Packages: read
+2025-05-20T17:26:38.4964279Z ##[endgroup]
+2025-05-20T17:26:38.4966772Z Secret source: Actions
+2025-05-20T17:26:38.4967616Z Prepare workflow directory
+2025-05-20T17:26:38.5399420Z Prepare all required actions
+2025-05-20T17:26:38.5453546Z Getting action download info
+2025-05-20T17:26:38.8596470Z ##[group]Download immutable action package 'actions/checkout@v4'
+2025-05-20T17:26:38.8597429Z Version: 4.2.2
+2025-05-20T17:26:38.8598501Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+2025-05-20T17:26:38.8599640Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+2025-05-20T17:26:38.8600354Z ##[endgroup]
+2025-05-20T17:26:38.9344595Z ##[group]Download immutable action package 'actions/upload-artifact@v4'
+2025-05-20T17:26:38.9345721Z Version: 4.6.2
+2025-05-20T17:26:38.9346599Z Digest: sha256:290722aa3281d5caf23d0acdc3dbeb3424786a1a01a9cc97e72f147225e37c38
+2025-05-20T17:26:38.9347528Z Source commit SHA: ea165f8d65b6e75b540449e92b4886f43607fa02
+2025-05-20T17:26:38.9348203Z ##[endgroup]
+2025-05-20T17:26:39.1334459Z Complete job name: build-boost-armv8
+2025-05-20T17:26:39.2018069Z ##[group]Run actions/checkout@v4
+2025-05-20T17:26:39.2018864Z with:
+2025-05-20T17:26:39.2019275Z   repository: AkinAb55/boost-armv8-build
+2025-05-20T17:26:39.2019935Z   token: ***
+2025-05-20T17:26:39.2020318Z   ssh-strict: true
+2025-05-20T17:26:39.2020700Z   ssh-user: git
+2025-05-20T17:26:39.2021085Z   persist-credentials: true
+2025-05-20T17:26:39.2021529Z   clean: true
+2025-05-20T17:26:39.2021910Z   sparse-checkout-cone-mode: true
+2025-05-20T17:26:39.2022377Z   fetch-depth: 1
+2025-05-20T17:26:39.2022750Z   fetch-tags: false
+2025-05-20T17:26:39.2023147Z   show-progress: true
+2025-05-20T17:26:39.2023542Z   lfs: false
+2025-05-20T17:26:39.2024006Z   submodules: false
+2025-05-20T17:26:39.2024398Z   set-safe-directory: true
+2025-05-20T17:26:39.2025043Z ##[endgroup]
+2025-05-20T17:26:39.4442569Z Syncing repository: AkinAb55/boost-armv8-build
+2025-05-20T17:26:39.4444400Z ##[group]Getting Git version info
+2025-05-20T17:26:39.4445578Z Working directory is '/home/runner/work/boost-armv8-build/boost-armv8-build'
+2025-05-20T17:26:39.4446713Z [command]/usr/bin/git version
+2025-05-20T17:26:39.4522907Z git version 2.49.0
+2025-05-20T17:26:39.4554557Z ##[endgroup]
+2025-05-20T17:26:39.4576177Z Temporarily overriding HOME='/home/runner/work/_temp/5b6d8394-d88b-453f-9e1e-9a785d559420' before making global git config changes
+2025-05-20T17:26:39.4578923Z Adding repository directory to the temporary git global config as a safe directory
+2025-05-20T17:26:39.4583144Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/boost-armv8-build/boost-armv8-build
+2025-05-20T17:26:39.4621608Z Deleting the contents of '/home/runner/work/boost-armv8-build/boost-armv8-build'
+2025-05-20T17:26:39.4630626Z ##[group]Initializing the repository
+2025-05-20T17:26:39.4633794Z [command]/usr/bin/git init /home/runner/work/boost-armv8-build/boost-armv8-build
+2025-05-20T17:26:39.4733965Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-05-20T17:26:39.4735944Z hint: is subject to change. To configure the initial branch name to use in all
+2025-05-20T17:26:39.4736912Z hint: of your new repositories, which will suppress this warning, call:
+2025-05-20T17:26:39.4737624Z hint:
+2025-05-20T17:26:39.4738122Z hint: 	git config --global init.defaultBranch <name>
+2025-05-20T17:26:39.4738718Z hint:
+2025-05-20T17:26:39.4739275Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-05-20T17:26:39.4740186Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-05-20T17:26:39.4740915Z hint:
+2025-05-20T17:26:39.4741318Z hint: 	git branch -m <name>
+2025-05-20T17:26:39.4752834Z Initialized empty Git repository in /home/runner/work/boost-armv8-build/boost-armv8-build/.git/
+2025-05-20T17:26:39.4763064Z [command]/usr/bin/git remote add origin https://github.com/AkinAb55/boost-armv8-build
+2025-05-20T17:26:39.4797925Z ##[endgroup]
+2025-05-20T17:26:39.4798719Z ##[group]Disabling automatic garbage collection
+2025-05-20T17:26:39.4801502Z [command]/usr/bin/git config --local gc.auto 0
+2025-05-20T17:26:39.4830445Z ##[endgroup]
+2025-05-20T17:26:39.4831305Z ##[group]Setting up auth
+2025-05-20T17:26:39.4837394Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-05-20T17:26:39.4870359Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-05-20T17:26:39.5202556Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-05-20T17:26:39.5238436Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-05-20T17:26:39.5478399Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-05-20T17:26:39.5539538Z ##[endgroup]
+2025-05-20T17:26:39.5541616Z ##[group]Fetching the repository
+2025-05-20T17:26:39.5553891Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ab942810095f36362deca5d716fef47248d487b5:refs/remotes/origin/main
+2025-05-20T17:26:40.4649693Z From https://github.com/AkinAb55/boost-armv8-build
+2025-05-20T17:26:40.4651906Z  * [new ref]         ab942810095f36362deca5d716fef47248d487b5 -> origin/main
+2025-05-20T17:26:40.4680962Z ##[endgroup]
+2025-05-20T17:26:40.4682874Z ##[group]Determining the checkout info
+2025-05-20T17:26:40.4684917Z ##[endgroup]
+2025-05-20T17:26:40.4689230Z [command]/usr/bin/git sparse-checkout disable
+2025-05-20T17:26:40.4731825Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-05-20T17:26:40.4758442Z ##[group]Checking out the ref
+2025-05-20T17:26:40.4761393Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-05-20T17:26:40.5177934Z Switched to a new branch 'main'
+2025-05-20T17:26:40.5179767Z branch 'main' set up to track 'origin/main'.
+2025-05-20T17:26:40.5185935Z ##[endgroup]
+2025-05-20T17:26:40.5219200Z [command]/usr/bin/git log -1 --format=%H
+2025-05-20T17:26:40.5241772Z ab942810095f36362deca5d716fef47248d487b5
+2025-05-20T17:26:40.5464206Z ##[group]Run sudo apt-get update
+2025-05-20T17:26:40.5465794Z [36;1msudo apt-get update[0m
+2025-05-20T17:26:40.5467005Z [36;1msudo apt-get install -y \[0m
+2025-05-20T17:26:40.5468205Z [36;1m  clang llvm lld \[0m
+2025-05-20T17:26:40.5469595Z [36;1m  binutils-aarch64-linux-gnu libc6-dev-arm64-cross \[0m
+2025-05-20T17:26:40.5471361Z [36;1m  g++-aarch64-linux-gnu g++-13-aarch64-linux-gnu \[0m
+2025-05-20T17:26:40.5473140Z [36;1m  libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross \[0m
+2025-05-20T17:26:40.5474918Z [36;1m  gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \[0m
+2025-05-20T17:26:40.5476591Z [36;1m  wget bzip2 tar build-essential zstd ar[0m
+2025-05-20T17:26:40.5650777Z shell: /usr/bin/bash -e {0}
+2025-05-20T17:26:40.5651850Z ##[endgroup]
+2025-05-20T17:26:40.6469358Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2025-05-20T17:26:40.6807590Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2025-05-20T17:26:40.6822598Z Get:6 https://packages.microsoft.com/repos/azure-cli noble InRelease [3564 B]
+2025-05-20T17:26:40.6835691Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2025-05-20T17:26:40.6848985Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2025-05-20T17:26:40.6904743Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2025-05-20T17:26:40.6974450Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2025-05-20T17:26:40.8088776Z Get:8 https://packages.microsoft.com/repos/azure-cli noble/main amd64 Packages [1318 B]
+2025-05-20T17:26:40.8543358Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [20.0 kB]
+2025-05-20T17:26:40.8589021Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [32.7 kB]
+2025-05-20T17:26:40.9016471Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1101 kB]
+2025-05-20T17:26:40.9119639Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [234 kB]
+2025-05-20T17:26:40.9159529Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [162 kB]
+2025-05-20T17:26:40.9180202Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1064 kB]
+2025-05-20T17:26:40.9262131Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [269 kB]
+2025-05-20T17:26:40.9292073Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [376 kB]
+2025-05-20T17:26:40.9323273Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1155 kB]
+2025-05-20T17:26:40.9397011Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [240 kB]
+2025-05-20T17:26:40.9420252Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+2025-05-20T17:26:40.9434571Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2025-05-20T17:26:40.9961305Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [39.2 kB]
+2025-05-20T17:26:40.9983205Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7084 B]
+2025-05-20T17:26:40.9995394Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [27.1 kB]
+2025-05-20T17:26:41.0277351Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [16.4 kB]
+2025-05-20T17:26:41.0298570Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [212 B]
+2025-05-20T17:26:41.0310793Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+2025-05-20T17:26:41.0321589Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [855 kB]
+2025-05-20T17:26:41.0384450Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [156 kB]
+2025-05-20T17:26:41.0408058Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [21.6 kB]
+2025-05-20T17:26:41.0422563Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [840 kB]
+2025-05-20T17:26:41.0468684Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [183 kB]
+2025-05-20T17:26:41.0493344Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [52.3 kB]
+2025-05-20T17:26:41.0508803Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1122 kB]
+2025-05-20T17:26:41.0574735Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [233 kB]
+2025-05-20T17:26:41.1040661Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Components [208 B]
+2025-05-20T17:26:41.1053233Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [208 B]
+2025-05-20T17:26:44.9409261Z Fetched 8596 kB in 1s (7563 kB/s)
+2025-05-20T17:26:45.5554425Z Reading package lists...
+2025-05-20T17:26:45.5872088Z Reading package lists...
+2025-05-20T17:26:45.7244835Z Building dependency tree...
+2025-05-20T17:26:45.7252836Z Reading state information...
+2025-05-20T17:26:45.7397342Z E: Unable to locate package ar
+2025-05-20T17:26:45.7428368Z ##[error]Process completed with exit code 100.
+2025-05-20T17:26:45.7492378Z ##[group]Run echo "=== Built Boost libs ==="
+2025-05-20T17:26:45.7492709Z [36;1mecho "=== Built Boost libs ==="[0m
+2025-05-20T17:26:45.7493008Z [36;1mfind ../boost_armv8_clang_install -type f || true[0m
+2025-05-20T17:26:45.7493346Z [36;1mecho "=== Проверка ELF и наличия всех .so ==="[0m
+2025-05-20T17:26:45.7493756Z [36;1mfind /usr/aarch64-linux-gnu/lib/ -type f -name "*.so*" -exec file {} \;[0m
+2025-05-20T17:26:45.7546979Z shell: /usr/bin/bash -e {0}
+2025-05-20T17:26:45.7547205Z ##[endgroup]
+2025-05-20T17:26:45.7615594Z === Built Boost libs ===
+2025-05-20T17:26:45.7628918Z find: ‘../boost_armv8_clang_install’: No such file or directory
+2025-05-20T17:26:45.7631214Z === Проверка ELF и наличия всех .so ===
+2025-05-20T17:26:45.7642938Z find: ‘/usr/aarch64-linux-gnu/lib/’: No such file or directory
+2025-05-20T17:26:45.7648197Z ##[error]Process completed with exit code 1.
+2025-05-20T17:26:45.7718785Z Post job cleanup.
+2025-05-20T17:26:45.8695641Z [command]/usr/bin/git version
+2025-05-20T17:26:45.8735759Z git version 2.49.0
+2025-05-20T17:26:45.8777395Z Temporarily overriding HOME='/home/runner/work/_temp/e52382f2-d2b2-4b75-9afb-d04aac13ba07' before making global git config changes
+2025-05-20T17:26:45.8778557Z Adding repository directory to the temporary git global config as a safe directory
+2025-05-20T17:26:45.8782874Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/boost-armv8-build/boost-armv8-build
+2025-05-20T17:26:45.8817188Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-05-20T17:26:45.8849006Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-05-20T17:26:45.9079484Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-05-20T17:26:45.9099444Z http.https://github.com/.extraheader
+2025-05-20T17:26:45.9111261Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-05-20T17:26:45.9140968Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-05-20T17:26:45.9463966Z Cleaning up orphan processes
