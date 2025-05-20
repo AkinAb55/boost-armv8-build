@@ -16,75 +16,39 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo -e "\n=== Installing dependencies ===" > errors.txt
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross g++-aarch64-linux-gnu wget bzip2 tar build-essential >> errors.txt 2>&1
+          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross g++-aarch64-linux-gnu libstdc++-13-dev-arm64-cross wget bzip2 tar build-essential
 
-      - name: Verify .so files in repository
+      - name: Verify ARM64 stdc++ headers presence
         run: |
-          echo -e "\n=== Checking .so files in repository ===" >> errors.txt
-          if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            echo "Listing files in usr/aarch64-linux-gnu/lib/:" >> errors.txt
-            ls -lh usr/aarch64-linux-gnu/lib/ >> errors.txt
-            echo -e "\nChecking format of key libraries:" >> errors.txt
-            file usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
-            file usr/aarch64-linux-gnu/lib/libmvec.so.1 >> errors.txt 2>&1
-            file usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 >> errors.txt 2>&1
-          else
-            echo "ERROR: Directory usr/aarch64-linux-gnu/lib not found in repository!" >> errors.txt
-          fi
+          echo "C++ ARM64 std headers:" >> errors.txt
+          ls /usr/aarch64-linux-gnu/include/c++/ >> errors.txt
+          ls /usr/aarch64-linux-gnu/include/c++/*/aarch64-linux-gnu/ >> errors.txt
 
       - name: Copy ARM64 .so libs from repo to sysroot
         run: |
-          echo -e "\n=== Copying .so files to sysroot ===" >> errors.txt
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
           if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/ >> errors.txt 2>&1
-            echo -e "\nListing sysroot lib directory (/usr/aarch64-linux-gnu/lib/):" >> errors.txt
-            ls -lh /usr/aarch64-linux-gnu/lib/ >> errors.txt
-            echo -e "\nChecking format of key libraries in sysroot:" >> errors.txt
-            file /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
-            file /usr/aarch64-linux-gnu/lib/libmvec.so.1 >> errors.txt 2>&1
-            file /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 >> errors.txt 2>&1
-          else
-            echo "ERROR: No .so files to copy: usr/aarch64-linux-gnu/lib does not exist!" >> errors.txt
+            sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/
           fi
-
-      - name: Verify compiler, linker, and tools
-        run: |
-          echo -e "\n=== Verifying compiler, linker, and tools ===" >> errors.txt
-          clang++ --version >> errors.txt 2>&1
-          ld --version >> errors.txt 2>&1
-          which clang++ >> errors.txt 2>&1
-          echo -e "\nChecking if gcc is absent from PATH:" >> errors.txt
-          which aarch64-linux-gnu-gcc >> errors.txt 2>&1 || echo "aarch64-linux-gnu-gcc not found, using clang++" >> errors.txt
-          echo -e "\nChecking library search paths:" >> errors.txt
-          clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -print-search-dirs >> errors.txt 2>&1
-          echo -e "\nChecking for ARM64 stdc++ headers:" >> errors.txt
-          ls /usr/aarch64-linux-gnu/include/c++/ | tee -a errors.txt
 
       - name: Download Boost source
         run: |
-          echo -e "\n=== Downloading Boost source ===" >> errors.txt
-          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2 2>> errors.txt
-          tar -xf boost_1_83_0.tar.bz2 2>> errors.txt
+          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
+          tar -xf boost_1_83_0.tar.bz2
 
       - name: Prepare user-config.jam for Clang ARM
         run: |
-          echo -e "\n=== Preparing user-config.jam ===" >> errors.txt
           echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu ;" > $HOME/user-config.jam
-          cat $HOME/user-config.jam >> errors.txt
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
-          echo -e "\n=== Bootstrapping Boost.Build ===" >> ../errors.txt
-          ./bootstrap.sh --with-toolset=clang >> ../errors.txt 2>&1 || { echo "ERROR: Bootstrap failed" >> ../errors.txt; exit 1; }
+          ./bootstrap.sh --with-toolset=clang
 
       - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot)
         working-directory: ./boost_1_83_0
         run: |
-          echo -e "\n=== Building Boost ===" >> ../errors.txt
           STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
           INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
           ./b2 toolset=clang-arm \
@@ -103,21 +67,12 @@ jobs:
             --with-system \
             --with-thread \
             --with-program_options \
-            -d+2 install -j$(nproc) > build_output.txt 2>&1 || { echo "ERROR: Build failed" >> ../errors.txt; cat build_output.txt | grep -E "error|failed|skipped" >> ../errors.txt; exit 1; }
-          echo -e "\nFiltered build errors (if any):" >> ../errors.txt
-          cat build_output.txt | grep -E "error|failed|skipped" >> ../errors.txt 2>/dev/null || echo "No build errors found" >> ../errors.txt
-
-      - name: Diagnostics (list built libs)
-        if: success()
-        run: |
-          echo -e "\n=== Listing built libraries ===" >> errors.txt
-          find boost_armv8_clang_install -type f >> errors.txt
+            -d+2 install -j$(nproc)
 
       - name: Package Boost artifacts
         if: success()
         run: |
-          echo -e "\n=== Packaging Boost artifacts ===" >> errors.txt
-          tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install 2>> errors.txt
+          tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
 
       - name: Upload Boost artifact
         if: success()
@@ -125,10 +80,3 @@ jobs:
         with:
           name: boost_armv8_clang
           path: boost_armv8_clang.tar.gz
-
-      - name: Upload error log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-errors
-          path: errors.txt
