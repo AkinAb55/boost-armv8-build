@@ -18,9 +18,8 @@ jobs:
         run: |
           echo -e "\n=== Installing dependencies ===" > errors.txt
           sudo apt-get update
-          # Важно: g++-aarch64-linux-gnu только для headers и runtime, компилировать будем clang++
           sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu \
-            libc6-dev-arm64-cross libstdc++-arm64-cross \
+            libc6-dev-arm64-cross g++-aarch64-linux-gnu \
             wget bzip2 tar build-essential >> errors.txt 2>&1
 
       - name: Verify .so files in repository
@@ -88,7 +87,6 @@ jobs:
         working-directory: ./boost_1_83_0
         run: |
           echo -e "\n=== Building Boost ===" >> ../errors.txt
-          # Определяем версию stdc++ (например, 13, 11, 10)
           STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
           INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
           ./b2 toolset=clang-arm \
