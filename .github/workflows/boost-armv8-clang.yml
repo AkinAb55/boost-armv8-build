@@ -72,7 +72,6 @@ jobs:
             --build-dir=../boost_android_arm64_build \
             --layout=system \
             --user-config=$HOME/user-config.jam \
-            --with-crc \
             --with-date_time \
             --with-dll \
             --with-filesystem \
@@ -98,12 +97,6 @@ jobs:
         run: |
           wget https://download.samba.org/pub/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
           tar -xf talloc-2.4.1.tar.gz
-
-      - name: Patch talloc cross-build (disable python, gettext, rpath)
-        working-directory: ./talloc-2.4.1
-        run: |
-          sed -i 's/--enable-python/--disable-python/g' wscript
-          sed -i 's/--with-gettext/--without-gettext/g' wscript
 
       - name: Configure and build talloc for Android arm64-v8a
         run: |
