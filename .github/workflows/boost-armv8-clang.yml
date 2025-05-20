@@ -10,99 +10,99 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install dependencies (dev, cross, all toolchains)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang llvm lld \
-            binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
-            g++-aarch64-linux-gnu g++-13-aarch64-linux-gnu \
-            libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross \
-            gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
-            wget bzip2 tar build-essential
+    - name: Install dependencies (dev, cross, all toolchains)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang llvm lld \
+          binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
+          g++-aarch64-linux-gnu g++-13-aarch64-linux-gnu \
+          libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross \
+          gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
+          wget bzip2 tar build-essential
 
-      - name: Diagnostics: check ARM64 C++ heade
-        run: |
-          echo "=== Checking ARM64 stdc++ headers and atomic support ==="
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/ || true
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu/ || true
-          head -n 10 /usr/aarch64-linux-gnu/include/c++/13/cstddef || true
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/atomic || true
-          echo "=== Checking existence of common STL headers ==="
-          for hdr in cstddef exception ostream fstream atomic set thread; do \
-            if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then \
-              echo "ERROR: missing $hdr"; \
-              exit 1; \
-            fi; \
-          done
-
-      - name: Copy ARM64 .so libs from repo to sysroot (if present)
-        run: |
-          sudo mkdir -p /usr/aarch64-linux-gnu/lib/
-          if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/
+    - name: Diagnostics: check ARM64 C++ headers and atomic
+      run: |
+        echo "=== Checking ARM64 stdc++ headers and atomic support ==="
+        ls -l /usr/aarch64-linux-gnu/include/c++/13/ || true
+        ls -l /usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu/ || true
+        head -n 10 /usr/aarch64-linux-gnu/include/c++/13/cstddef || true
+        ls -l /usr/aarch64-linux-gnu/include/c++/13/atomic || true
+        echo "=== Checking existence of common STL headers ==="
+        for hdr in cstddef exception ostream fstream atomic set thread; do
+          if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then
+            echo "ERROR: missing $hdr"
+            exit 1
           fi
+        done
 
-      - name: Download Boost source
-        run: |
-          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
-          tar -xf boost_1_83_0.tar.bz2
+    - name: Copy ARM64 .so libs from repo to sysroot (if present)
+      run: |
+        sudo mkdir -p /usr/aarch64-linux-gnu/lib/
+        if [ -d "usr/aarch64-linux-gnu/lib" ]; then
+          sudo cp -v usr/aarch64-linux-gnu/lib/*.so* /usr/aarch64-linux-gnu/lib/
+        fi
 
-      - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain)
-        run: |
-          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ ;" > $HOME/user-config.jam
+    - name: Download Boost source
+      run: |
+        wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
+        tar -xf boost_1_83_0.tar.bz2
 
-      - name: Bootstrap Boost.Build
-        working-directory: ./boost_1_83_0
-        run: |
-          ./bootstrap.sh --with-toolset=clang
+    - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain)
+      run: |
+        echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ ;" > $HOME/user-config.jam
 
-      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, all safe flags)
-        working-directory: ./boost_1_83_0
-        run: |
-          STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
-          INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
-          ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++14 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2" \
-            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib" \
-            target-os=linux \
-            address-model=64 \
-            architecture=arm \
-            stdlib=libstdc++ \
-            threadapi=pthread \
-            variant=release \
-            threading=multi \
-            link=static,shared \
-            runtime-link=shared \
-            --prefix=../boost_armv8_clang_install \
-            --build-dir=../boost_armv8_clang_build \
-            --layout=system \
-            --user-config=$HOME/user-config.jam \
-            --with-filesystem \
-            --with-log \
-            --with-serialization \
-            --with-system \
-            --with-thread \
-            --with-program_options \
-            -d+2 install -j$(nproc)
+    - name: Bootstrap Boost.Build
+      working-directory: ./boost_1_83_0
+      run: |
+        ./bootstrap.sh --with-toolset=clang
 
-      - name: Diagnostics: check built Boost libs
-        if: always()
-        run: |
-          echo "=== Built Boost libs ==="
-          find ../boost_armv8_clang_install -type f || true
+    - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, all safe flags)
+      working-directory: ./boost_1_83_0
+      run: |
+        STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
+        INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
+        ./b2 toolset=clang-arm \
+          cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++14 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2" \
+          linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib" \
+          target-os=linux \
+          address-model=64 \
+          architecture=arm \
+          stdlib=libstdc++ \
+          threadapi=pthread \
+          variant=release \
+          threading=multi \
+          link=static,shared \
+          runtime-link=shared \
+          --prefix=../boost_armv8_clang_install \
+          --build-dir=../boost_armv8_clang_build \
+          --layout=system \
+          --user-config=$HOME/user-config.jam \
+          --with-filesystem \
+          --with-log \
+          --with-serialization \
+          --with-system \
+          --with-thread \
+          --with-program_options \
+          -d+2 install -j$(nproc)
 
-      - name: Package Boost artifacts
-        if: success()
-        run: |
-          tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
+    - name: Diagnostics: check built Boost libs
+      if: always()
+      run: |
+        echo "=== Built Boost libs ==="
+        find ../boost_armv8_clang_install -type f || true
 
-      - name: Upload Boost artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: boost_armv8_clang
-          path: boost_armv8_clang.tar.gz
+    - name: Package Boost artifacts
+      if: success()
+      run: |
+        tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
+
+    - name: Upload Boost artifact
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: boost_armv8_clang
+        path: boost_armv8_clang.tar.gz
