@@ -18,7 +18,10 @@ jobs:
         run: |
           echo -e "\n=== Installing dependencies ===" > errors.txt
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross wget bzip2 tar build-essential >> errors.txt 2>&1
+          # Важно: g++-aarch64-linux-gnu только для headers и runtime, компилировать будем clang++
+          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu \
+            libc6-dev-arm64-cross libstdc++-arm64-cross \
+            wget bzip2 tar build-essential >> errors.txt 2>&1
 
       - name: Verify .so files in repository
         run: |
@@ -46,8 +49,6 @@ jobs:
             file /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1
             file /usr/aarch64-linux-gnu/lib/libmvec.so.1 >> errors.txt 2>&1
             file /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 >> errors.txt 2>&1
-            echo -e "\nChecking dependencies of libm.so.6 using ld-linux-aarch64.so.1:" >> errors.txt
-            /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 --list /usr/aarch64-linux-gnu/lib/libm.so.6 >> errors.txt 2>&1 || echo "ERROR: ld-linux-aarch64.so.1 failed to resolve dependencies for libm.so.6" >> errors.txt
           else
             echo "ERROR: No .so files to copy: usr/aarch64-linux-gnu/lib does not exist!" >> errors.txt
           fi
@@ -60,10 +61,10 @@ jobs:
           which clang++ >> errors.txt 2>&1
           echo -e "\nChecking if gcc is absent from PATH:" >> errors.txt
           which aarch64-linux-gnu-gcc >> errors.txt 2>&1 || echo "aarch64-linux-gnu-gcc not found, using clang++" >> errors.txt
-          echo -e "\nChecking availability of aarch64-linux-gnu-ldd:" >> errors.txt
-          which aarch64-linux-gnu-ldd >> errors.txt 2>&1 || echo "WARNING: aarch64-linux-gnu-ldd not found, using ld-linux-aarch64.so.1 for dependency check" >> errors.txt
           echo -e "\nChecking library search paths:" >> errors.txt
           clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -print-search-dirs >> errors.txt 2>&1
+          echo -e "\nChecking for ARM64 stdc++ headers:" >> errors.txt
+          ls /usr/aarch64-linux-gnu/include/c++/ | tee -a errors.txt
 
       - name: Download Boost source
         run: |
@@ -80,15 +81,18 @@ jobs:
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
-          echo -e "\n=== Bootstrapping Boost.Build ===" >> errors.txt
-          ./bootstrap.sh --with-toolset=clang >> errors.txt 2>&1 || { echo "ERROR: Bootstrap failed" >> ../errors.txt; exit 1; }
+          echo -e "\n=== Bootstrapping Boost.Build ===" >> ../errors.txt
+          ./bootstrap.sh --with-toolset=clang >> ../errors.txt 2>&1 || { echo "ERROR: Bootstrap failed" >> ../errors.txt; exit 1; }
 
       - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot)
         working-directory: ./boost_1_83_0
         run: |
           echo -e "\n=== Building Boost ===" >> ../errors.txt
+          # Определяем версию stdc++ (например, 13, 11, 10)
+          STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
+          INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
           ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14" \
+            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -march=armv8-a -fPIC -std=c++14 $INCFLAGS" \
             linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu -L/usr/aarch64-linux-gnu/lib" \
             variant=release \
             threading=multi \
