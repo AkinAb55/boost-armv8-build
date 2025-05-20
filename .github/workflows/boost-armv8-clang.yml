@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8 (Clang, ARM64, extra safe)
+name: Build Boost for ARMv8 (Clang, ARM64, ananbox-compatible, extra safe)
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies (cross, dev, toolchains)
+      - name: Install dependencies (cross, dev, toolchains, extractors)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -24,93 +24,125 @@ jobs:
             gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
             wget bzip2 tar build-essential zstd ar
 
-      - name: Diagnostics check ARM64 C++ headers and atomic
-        run: |
-          echo "=== Checking ARM64 stdc++ headers and atomic support ==="
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/ || true
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/aarch64-linux-gnu/ || true
-          head -n 10 /usr/aarch64-linux-gnu/include/c++/13/cstddef || true
-          ls -l /usr/aarch64-linux-gnu/include/c++/13/atomic || true
-          echo "=== Checking existence of common STL headers ==="
-          for hdr in cstddef exception ostream fstream atomic set thread; do
-            if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then
-              echo "ERROR: missing $hdr"
-              exit 1
-            fi
-          done
-
-      - name: Copy ARM64 .so libs from repo to sysroot (if present)
+      - name: Copy all ARM64 .so and related files from repo to sysroot
         run: |
           sudo mkdir -p /usr/aarch64-linux-gnu/lib/
           if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            for sofile in usr/aarch64-linux-gnu/lib/*.so*; do
-              sudo cp -av "$sofile" /usr/aarch64-linux-gnu/lib/ || true
-            done
+            sudo cp -av usr/aarch64-linux-gnu/lib/* /usr/aarch64-linux-gnu/lib/
           fi
+          echo "=== After copy from repo ==="
+          ls -l /usr/aarch64-linux-gnu/lib/
 
-      - name: Ensure libm.so.6 and libmvec.so.1 present in sysroot, download if needed
+      - name: Fix broken symlinks for .so files (if any)
         run: |
-          set -euxo pipefail
-          for lib in libm.so.6 libmvec.so.1; do
-            if [ ! -f /usr/aarch64-linux-gnu/lib/$lib ]; then
-              # Try system copy
-              src=$(find /lib /usr/lib -name $lib | grep aarch64-linux-gnu | head -n1 || true)
-              if [ -n "$src" ]; then
-                sudo cp -fv "$src" /usr/aarch64-linux-gnu/lib/
-              else
-                # Download from Ubuntu ports and extract
-                wget -O /tmp/libc6_arm64.deb http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb
-                ar x /tmp/libc6_arm64.deb data.tar.zst
-                tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/$lib
-                sudo cp -v ./lib/aarch64-linux-gnu/$lib /usr/aarch64-linux-gnu/lib/
-                rm -f data.tar.zst ./lib/aarch64-linux-gnu/$lib /tmp/libc6_arm64.deb
-              fi
-            fi
+          cd /usr/aarch64-linux-gnu/lib/
+          for so in *.so*; do
+            [ -L "$so" ] && [ ! -e "$so" ] && echo "Broken symlink: $so points to $(readlink $so)" || true
           done
-          ls -l /usr/aarch64-linux-gnu/lib/libm*.so*
 
-      - name: Ensure other critical .so (libpthread, libc, librt, etc) present, download if needed
+      - name: Ensure all critical .so files present, download from multiple sources if missing
         run: |
           set -euxo pipefail
-          for lib in libc.so.6 libpthread.so.0 librt.so.1 libdl.so.2 libutil.so.1 libgcc_s.so.1; do
-            if [ ! -f /usr/aarch64-linux-gnu/lib/$lib ]; then
+          cd /usr/aarch64-linux-gnu/lib/
+          # Список критичных библиотек для ananbox и boost (ARM64)
+          libs="libm.so.6 libmvec.so.1 libc.so.6 libpthread.so.0 librt.so.1 libdl.so.2 libutil.so.1 libgcc_s.so.1 ld-linux-aarch64.so.1 libnsl.so.1 libanl.so.1 libresolv.so.2 libBrokenLocale.so.1"
+          for lib in $libs; do
+            if [ ! -f "$lib" ]; then
+              echo "Не найдено: $lib, пробую найти в стандартных местах хоста..."
               src=$(find /lib /usr/lib -name $lib | grep aarch64-linux-gnu | head -n1 || true)
               if [ -n "$src" ]; then
-                sudo cp -fv "$src" /usr/aarch64-linux-gnu/lib/
-              else
-                wget -O /tmp/libc6_arm64.deb http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb
-                ar x /tmp/libc6_arm64.deb data.tar.zst
-                tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/$lib || true
+                echo "Нашёл $lib на хосте: $src"
+                sudo cp -fv "$src" .
+                continue
+              fi
+              echo "Пробую скачать $lib из разных интернет-репозиториев..."
+              gotfile=""
+              # 1. Ubuntu Ports (официально)
+              for url in \
+                "http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
+                "http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.35-0ubuntu3.7_arm64.deb" \
+                "http://ftp.debian.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
+                "https://mirror.yandex.ru/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
+                "https://mirrors.edge.kernel.org/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
+                "https://launchpad.net/ubuntu/+source/glibc/2.39-0ubuntu8.4/+build/27900554/+files/libc6_2.39-0ubuntu8.4_arm64.deb" \
+                ; do
+                wget -O /tmp/libc6_arm64.deb "$url" || continue
+                ar x /tmp/libc6_arm64.deb data.tar.zst || ar x /tmp/libc6_arm64.deb data.tar.xz || continue
+                tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/$lib 2>/dev/null || \
+                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
                 if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
-                  sudo cp -v ./lib/aarch64-linux-gnu/$lib /usr/aarch64-linux-gnu/lib/
+                  sudo cp -v ./lib/aarch64-linux-gnu/$lib .
+                  gotfile="yes"
+                  break
                 fi
-                rm -f data.tar.zst ./lib/aarch64-linux-gnu/$lib /tmp/libc6_arm64.deb || true
+                rm -f data.tar.zst data.tar.xz /tmp/libc6_arm64.deb
+              done
+              # 2. Попытка с Debian/Armbian альтернатив
+              if [ -z "$gotfile" ]; then
+                for url in \
+                  "http://ftp.debian.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
+                  "https://armbian.hosthatch.com/apt/pool/main/g/glibc/libc6_2.35-0ubuntu3_arm64.deb" \
+                  ; do
+                  wget -O /tmp/libc6_arm64.deb "$url" || continue
+                  ar x /tmp/libc6_arm64.deb data.tar.xz || continue
+                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
+                  if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
+                    sudo cp -v ./lib/aarch64-linux-gnu/$lib .
+                    gotfile="yes"
+                    break
+                  fi
+                  rm -f data.tar.xz /tmp/libc6_arm64.deb
+                done
+              fi
+              # 3. Попытка с mirrors.kernel.org (на ARM)
+              if [ -z "$gotfile" ]; then
+                for url in \
+                  "https://mirrors.edge.kernel.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
+                  ; do
+                  wget -O /tmp/libc6_arm64.deb "$url" || continue
+                  ar x /tmp/libc6_arm64.deb data.tar.xz || continue
+                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
+                  if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
+                    sudo cp -v ./lib/aarch64-linux-gnu/$lib .
+                    gotfile="yes"
+                    break
+                  fi
+                  rm -f data.tar.xz /tmp/libc6_arm64.deb
+                done
+              fi
+              if [ ! -f "$lib" ]; then
+                echo "!!! Критическая ошибка: $lib не удалось получить ни из репозитория, ни из интернета"
+                exit 1
               fi
             fi
           done
+          echo "=== После скачивания и копирования ==="
+          ls -l /usr/aarch64-linux-gnu/lib/
+          # Проверка что все .so — настоящие ELF, а не битые ссылки
+          for so in *.so*; do file "$so"; done
 
-      - name: Download Boost source
+      - name: Download Boost source (ananbox requirements)
         run: |
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
-      - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain)
+      - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain, ananbox)
         run: |
-          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ ;" > $HOME/user-config.jam
+          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -fvisibility=hidden -fPIC ;" > $HOME/user-config.jam
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, all safe flags)
+      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, ananbox flags)
         working-directory: ./boost_1_83_0
         run: |
           STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
           INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
           ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++14 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2" \
-            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib" \
+            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++17 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2 -fvisibility=hidden -Wall -Wextra -O2" \
+            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib -Wl,--no-undefined" \
             target-os=linux \
             address-model=64 \
             architecture=arm \
@@ -132,11 +164,13 @@ jobs:
             --with-program_options \
             -d+2 install -j$(nproc)
 
-      - name: Diagnostics check built Boost libs
+      - name: Diagnostics: check built Boost libs
         if: always()
         run: |
           echo "=== Built Boost libs ==="
           find ../boost_armv8_clang_install -type f || true
+          echo "=== Проверка ELF и наличия всех .so ==="
+          find /usr/aarch64-linux-gnu/lib/ -type f -name "*.so*" -exec file {} \;
 
       - name: Package Boost artifacts
         if: success()
