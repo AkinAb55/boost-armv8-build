@@ -1,4 +1,4 @@
-name: Build Boost for ARMv8 (Clang, ARM64, ananbox-compatible, extra safe)
+name: Build Boost for Android (bionic, arm64-v8a, ananbox compatible)
 
 on:
   workflow_dispatch:
@@ -6,180 +6,94 @@ on:
     branches: [main]
 
 jobs:
-  build-boost-armv8:
+  build-boost-android-arm64:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies (cross, dev, toolchains, extractors)
+      - name: Install dependencies (host tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            clang llvm lld \
-            binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
-            g++-aarch64-linux-gnu g++-13-aarch64-linux-gnu \
-            libstdc++-13-dev-arm64-cross libstdc++6-arm64-cross \
-            gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
-            wget bzip2 tar build-essential zstd ar
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip
 
-      - name: Copy all ARM64 .so and related files from repo to sysroot
+      - name: Download and extract Android NDK (r26c)
         run: |
-          sudo mkdir -p /usr/aarch64-linux-gnu/lib/
-          if [ -d "usr/aarch64-linux-gnu/lib" ]; then
-            sudo cp -av usr/aarch64-linux-gnu/lib/* /usr/aarch64-linux-gnu/lib/
-          fi
-          echo "=== After copy from repo ==="
-          ls -l /usr/aarch64-linux-gnu/lib/
+          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
+          unzip -q ndk.zip
+          mv android-ndk-r26c $HOME/android-ndk
 
-      - name: Fix broken symlinks for .so files (if any)
+      - name: Set up Android NDK environment
         run: |
-          cd /usr/aarch64-linux-gnu/lib/
-          for so in *.so*; do
-            [ -L "$so" ] && [ ! -e "$so" ] && echo "Broken symlink: $so points to $(readlink $so)" || true
-          done
+          echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Ensure all critical .so files present, download from multiple sources if missing
-        run: |
-          set -euxo pipefail
-          cd /usr/aarch64-linux-gnu/lib/
-          # Список критичных библиотек для ananbox и boost (ARM64)
-          libs="libm.so.6 libmvec.so.1 libc.so.6 libpthread.so.0 librt.so.1 libdl.so.2 libutil.so.1 libgcc_s.so.1 ld-linux-aarch64.so.1 libnsl.so.1 libanl.so.1 libresolv.so.2 libBrokenLocale.so.1"
-          for lib in $libs; do
-            if [ ! -f "$lib" ]; then
-              echo "Не найдено: $lib, пробую найти в стандартных местах хоста..."
-              src=$(find /lib /usr/lib -name $lib | grep aarch64-linux-gnu | head -n1 || true)
-              if [ -n "$src" ]; then
-                echo "Нашёл $lib на хосте: $src"
-                sudo cp -fv "$src" .
-                continue
-              fi
-              echo "Пробую скачать $lib из разных интернет-репозиториев..."
-              gotfile=""
-              # 1. Ubuntu Ports (официально)
-              for url in \
-                "http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
-                "http://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.35-0ubuntu3.7_arm64.deb" \
-                "http://ftp.debian.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
-                "https://mirror.yandex.ru/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
-                "https://mirrors.edge.kernel.org/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.4_arm64.deb" \
-                "https://launchpad.net/ubuntu/+source/glibc/2.39-0ubuntu8.4/+build/27900554/+files/libc6_2.39-0ubuntu8.4_arm64.deb" \
-                ; do
-                wget -O /tmp/libc6_arm64.deb "$url" || continue
-                ar x /tmp/libc6_arm64.deb data.tar.zst || ar x /tmp/libc6_arm64.deb data.tar.xz || continue
-                tar --extract --zstd --file=data.tar.zst ./lib/aarch64-linux-gnu/$lib 2>/dev/null || \
-                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
-                if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
-                  sudo cp -v ./lib/aarch64-linux-gnu/$lib .
-                  gotfile="yes"
-                  break
-                fi
-                rm -f data.tar.zst data.tar.xz /tmp/libc6_arm64.deb
-              done
-              # 2. Попытка с Debian/Armbian альтернатив
-              if [ -z "$gotfile" ]; then
-                for url in \
-                  "http://ftp.debian.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
-                  "https://armbian.hosthatch.com/apt/pool/main/g/glibc/libc6_2.35-0ubuntu3_arm64.deb" \
-                  ; do
-                  wget -O /tmp/libc6_arm64.deb "$url" || continue
-                  ar x /tmp/libc6_arm64.deb data.tar.xz || continue
-                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
-                  if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
-                    sudo cp -v ./lib/aarch64-linux-gnu/$lib .
-                    gotfile="yes"
-                    break
-                  fi
-                  rm -f data.tar.xz /tmp/libc6_arm64.deb
-                done
-              fi
-              # 3. Попытка с mirrors.kernel.org (на ARM)
-              if [ -z "$gotfile" ]; then
-                for url in \
-                  "https://mirrors.edge.kernel.org/debian/pool/main/g/glibc/libc6_2.31-13+deb11u7_arm64.deb" \
-                  ; do
-                  wget -O /tmp/libc6_arm64.deb "$url" || continue
-                  ar x /tmp/libc6_arm64.deb data.tar.xz || continue
-                  tar --extract --xz --file=data.tar.xz ./lib/aarch64-linux-gnu/$lib 2>/dev/null || true
-                  if [ -f ./lib/aarch64-linux-gnu/$lib ]; then
-                    sudo cp -v ./lib/aarch64-linux-gnu/$lib .
-                    gotfile="yes"
-                    break
-                  fi
-                  rm -f data.tar.xz /tmp/libc6_arm64.deb
-                done
-              fi
-              if [ ! -f "$lib" ]; then
-                echo "!!! Критическая ошибка: $lib не удалось получить ни из репозитория, ни из интернета"
-                exit 1
-              fi
-            fi
-          done
-          echo "=== После скачивания и копирования ==="
-          ls -l /usr/aarch64-linux-gnu/lib/
-          # Проверка что все .so — настоящие ELF, а не битые ссылки
-          for so in *.so*; do file "$so"; done
-
-      - name: Download Boost source (ananbox requirements)
+      - name: Download Boost source
         run: |
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
-      - name: Prepare user-config.jam for Clang ARM (sysroot + stdlib + toolchain, ananbox)
+      - name: Prepare user-config.jam for Android (bionic, arm64-v8a)
         run: |
-          echo "using clang : arm : clang++ -target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -fvisibility=hidden -fPIC ;" > $HOME/user-config.jam
+          ANDROID_API=21
+          NDK_HOME="$HOME/android-ndk"
+          TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "using clang : android : $TOOLCHAIN/clang++ --target=aarch64-linux-android$ANDROID_API --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" > $HOME/user-config.jam
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
           ./bootstrap.sh --with-toolset=clang
 
-      - name: Build Boost for ARMv8/ARMv9 (Clang, ARM sysroot, ananbox flags)
+      - name: Build Boost for Android arm64-v8a (bionic)
         working-directory: ./boost_1_83_0
+        env:
+          ANDROID_API: 21
+          NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
-          STDVER=$(ls /usr/aarch64-linux-gnu/include/c++/ | sort -V | tail -n1)
-          INCFLAGS="-I/usr/aarch64-linux-gnu/include/c++/$STDVER -I/usr/aarch64-linux-gnu/include/c++/$STDVER/aarch64-linux-gnu"
-          ./b2 toolset=clang-arm \
-            cxxflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -march=armv8-a -fPIC -std=c++17 $INCFLAGS -DBOOST_ATOMIC_FLAG_LOCK_FREE=2 -fvisibility=hidden -Wall -Wextra -O2" \
-            linkflags="-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu --gcc-toolchain=/usr -stdlib=libstdc++ -L/usr/aarch64-linux-gnu/lib -Wl,--no-undefined" \
-            target-os=linux \
+          TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          ./b2 toolset=clang-android \
+            cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++17 -fvisibility=hidden" \
+            linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined" \
+            target-os=android \
             address-model=64 \
             architecture=arm \
-            stdlib=gnu \
+            abi=aapcs \
+            binary-format=elf \
+            threading=multi \
             threadapi=pthread \
             variant=release \
-            threading=multi \
             link=static,shared \
             runtime-link=shared \
-            --prefix=../boost_armv8_clang_install \
-            --build-dir=../boost_armv8_clang_build \
+            --prefix=../boost_android_arm64_install \
+            --build-dir=../boost_android_arm64_build \
             --layout=system \
             --user-config=$HOME/user-config.jam \
             --with-filesystem \
             --with-log \
+            --with-program_options \
             --with-serialization \
             --with-system \
             --with-thread \
-            --with-program_options \
             -d+2 install -j$(nproc)
 
       - name: Diagnostics check built Boost libs
         if: always()
         run: |
-          echo "=== Built Boost libs ==="
-          find ../boost_armv8_clang_install -type f || true
-          echo "=== Проверка ELF и наличия всех .so ==="
-          find /usr/aarch64-linux-gnu/lib/ -type f -name "*.so*" -exec file {} \;
+          echo "=== Built Boost libs for Android ==="
+          find ../boost_android_arm64_install -type f || true
+          file ../boost_android_arm64_install/lib/* || true
 
       - name: Package Boost artifacts
         if: success()
         run: |
-          tar -czvf boost_armv8_clang.tar.gz boost_armv8_clang_install
+          tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
       - name: Upload Boost artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: boost_armv8_clang
-          path: boost_armv8_clang.tar.gz
+          name: boost_android_arm64
+          path: boost_android_arm64.tar.gz
