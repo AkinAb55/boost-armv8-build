@@ -32,7 +32,7 @@ jobs:
       # --- BOOST ---
       - name: Download Boost source
         run: |
-          wget -nv https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.bz2 -O boost_1_83_0.tar.bz2
+          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
 
       - name: Prepare user-config.jam for Boost (Android arm64-v8a)
