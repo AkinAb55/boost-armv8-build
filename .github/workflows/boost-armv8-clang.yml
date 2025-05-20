@@ -73,7 +73,6 @@ jobs:
             --layout=system \
             --user-config=$HOME/user-config.jam \
             --with-date_time \
-            --with-dll \
             --with-filesystem \
             --with-interprocess \
             --with-log \
