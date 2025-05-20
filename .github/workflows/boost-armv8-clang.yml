@@ -18,9 +18,7 @@ jobs:
         run: |
           echo -e "\n=== Installing dependencies ===" > errors.txt
           sudo apt-get update
-          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu \
-            libc6-dev-arm64-cross g++-aarch64-linux-gnu \
-            wget bzip2 tar build-essential >> errors.txt 2>&1
+          sudo apt-get install -y clang llvm lld binutils-aarch64-linux-gnu libc6-dev-arm64-cross g++-aarch64-linux-gnu wget bzip2 tar build-essential >> errors.txt 2>&1
 
       - name: Verify .so files in repository
         run: |
