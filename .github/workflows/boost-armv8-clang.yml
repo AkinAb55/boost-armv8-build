@@ -24,7 +24,7 @@ jobs:
           gcc-13-aarch64-linux-gnu gcc-aarch64-linux-gnu \
           wget bzip2 tar build-essential
 
-    - name: Diagnostics: check ARM64 C++ headers and atomic
+    - name: Diagnostics:check ARM64 C++ headers and atomic
       run: |
         echo "=== Checking ARM64 stdc++ headers and atomic support ==="
         ls -l /usr/aarch64-linux-gnu/include/c++/13/ || true
