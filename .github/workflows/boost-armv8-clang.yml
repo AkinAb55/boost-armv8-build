@@ -30,7 +30,7 @@ jobs:
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
       # --- BOOST ---
-      - name: Download Boost source
+      - name: Download Boost source from SourceForge
         run: |
           wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
           tar -xf boost_1_83_0.tar.bz2
@@ -104,8 +104,17 @@ jobs:
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+          export ac_cv_func_malloc_0_nonnull=yes
+          export ac_cv_func_realloc_0_nonnull=yes
+          export ac_cv_have_decl_malloc=yes
+          export ac_cv_have_decl_realloc=yes
+          export ac_cv_prog_cc_c99='-std=c99'
+          export ac_cv_func_getpagesize=yes
+          export ac_cv_func_memset=yes
+          export ac_cv_func_memcpy=yes
+          export ac_cv_header_sys_time_h=yes
           cd talloc-2.4.1
-          ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath CC=$CC AR=$AR RANLIB=$RANLIB CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          ./configure --host=aarch64-linux-android --build=x86_64-pc-linux-gnu --prefix=$PWD/install --disable-python --without-gettext --disable-rpath CC=$CC AR=$AR RANLIB=$RANLIB CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
           make -j$(nproc)
           make install
 
