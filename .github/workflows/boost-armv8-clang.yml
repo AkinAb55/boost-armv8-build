@@ -32,11 +32,11 @@ jobs:
           head -n 10 /usr/aarch64-linux-gnu/include/c++/13/cstddef || true
           ls -l /usr/aarch64-linux-gnu/include/c++/13/atomic || true
           echo "=== Checking existence of common STL headers ==="
-          for hdr in cstddef exception ostream fstream atomic set thread; do
-            if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then
-              echo "ERROR: missing $hdr"
-              exit 1
-            fi
+          for hdr in cstddef exception ostream fstream atomic set thread; do \
+            if [ ! -f "/usr/aarch64-linux-gnu/include/c++/13/$hdr" ]; then \
+              echo "ERROR: missing $hdr"; \
+              exit 1; \
+            fi; \
           done
 
       - name: Copy ARM64 .so libs from repo to sysroot (if present)
