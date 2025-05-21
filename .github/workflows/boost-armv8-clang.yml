@@ -116,7 +116,7 @@ jobs:
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
       # --- TALLOC ---
-      - name: Download and extract talloc
+      - name: Download and extract talloc (with autogen if needed)
         run: |
           wget https://download.samba.org/pub/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
           tar -xf talloc-2.4.1.tar.gz
