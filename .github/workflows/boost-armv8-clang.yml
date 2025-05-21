@@ -78,7 +78,6 @@ jobs:
             --with-program_options \
             --with-regex \
             --with-serialization \
-            --with-system \
             --with-thread \
             --with-uuid \
             -d+2 install -j$(nproc)
