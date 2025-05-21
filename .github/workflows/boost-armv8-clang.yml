@@ -56,8 +56,12 @@ jobs:
 
       - name: Download Boost source (GitHub mirror, with progress & retry)
         run: |
-          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost_1_83_0.tar.xz"
-          tar -xf boost_1_83_0.tar.xz
+          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
+          tar -xf boost-1.83.0.tar.xz
+          mv boost-1.83.0 boost_1_83_0
+
+      - name: List files after extracting Boost
+        run: ls -lah
 
       - name: Prepare user-config.jam for Boost (Android arm64-v8a)
         run: |
