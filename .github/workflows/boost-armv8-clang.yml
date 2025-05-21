@@ -120,6 +120,12 @@ jobs:
           wget https://download.samba.org/pub/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
           tar -xf talloc-2.4.1.tar.gz
 
+      - name: Download waf for talloc
+        run: |
+          cd talloc-2.4.1
+          wget https://waf.io/waf-2.0.22 -O waf
+          chmod +x waf
+
       - name: Configure and build talloc for Android arm64-v8a (waf, cross workaround)
         run: |
           export ANDROID_API=21
