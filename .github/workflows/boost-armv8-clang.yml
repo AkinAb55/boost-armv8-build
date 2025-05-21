@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies (host tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git autoconf automake libtool pkg-config python3
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git autoconf automake libtool pkg-config python3 curl
 
       - name: Download and extract Android NDK (r26c)
         run: |
@@ -30,10 +30,34 @@ jobs:
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
       # --- BOOST ---
-      - name: Download Boost source from SourceForge
+      - name: Prepare Boost download script
         run: |
-          wget -nv https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2/download -O boost_1_83_0.tar.bz2
-          tar -xf boost_1_83_0.tar.bz2
+          cat <<'EOF' > download_boost.sh
+          #!/bin/bash
+          BOOST_URL="$1"
+          BOOST_ARCHIVE="$2"
+          MAX_ATTEMPTS=5
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+              echo "Attempt $attempt of $MAX_ATTEMPTS"
+              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
+              if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
+                  echo "Download successful."
+                  exit 0
+              else
+                  echo "Download failed, retrying..."
+                  sleep 3
+              fi
+          done
+          echo "Failed to download Boost after $MAX_ATTEMPTS attempts."
+          exit 1
+          EOF
+          chmod +x download_boost.sh
+
+      - name: Download Boost source (GitHub mirror, with progress & retry)
+        run: |
+          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost_1_83_0.tar.xz"
+          tar -xf boost_1_83_0.tar.xz
 
       - name: Prepare user-config.jam for Boost (Android arm64-v8a)
         run: |
@@ -78,6 +102,7 @@ jobs:
             --with-program_options \
             --with-regex \
             --with-serialization \
+            --with-system \
             --with-thread \
             -d+2 install -j$(nproc)
 
@@ -92,7 +117,7 @@ jobs:
           wget https://download.samba.org/pub/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
           tar -xf talloc-2.4.1.tar.gz
 
-      - name: Configure and build talloc for Android arm64-v8a (waf)
+      - name: Configure and build talloc for Android arm64-v8a (configure)
         run: |
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
@@ -104,14 +129,9 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.1
-          python3 ./waf configure --cross-compile \
-            --prefix=$PWD/install \
-            --disable-python \
-            --without-gettext \
-            --disable-rpath \
-            CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-          python3 ./waf build -j$(nproc)
-          python3 ./waf install
+          ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          make -j$(nproc)
+          make install
 
       - name: Package talloc artifacts
         if: success()
