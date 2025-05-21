@@ -79,7 +79,6 @@ jobs:
             --with-regex \
             --with-serialization \
             --with-thread \
-            --with-uuid \
             -d+2 install -j$(nproc)
 
       - name: Package Boost artifacts
