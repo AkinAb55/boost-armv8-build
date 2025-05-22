@@ -19,6 +19,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config
+          echo "=== Install dependencies ===" >> $GITHUB_WORKSPACE/full_build.log
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       # Кэширование Android NDK
       - name: Cache Android NDK
@@ -32,31 +34,45 @@ jobs:
       - name: Download and extract Android NDK (r26c)
         if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
-          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
-          unzip -q ndk.zip
-          mv android-ndk-r26c $HOME/android-ndk
+          echo "=== Download and extract Android NDK ===" >> $GITHUB_WORKSPACE/full_build.log
+          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          unzip -q ndk.zip >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          mv android-ndk-r26c $HOME/android-ndk >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       # Проверка целостности Android NDK
       - name: Verify Android NDK integrity
         run: |
+          echo "=== Verify Android NDK integrity ===" >> $GITHUB_WORKSPACE/full_build.log
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" ]; then
-            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found"
+            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found" | tee -a $GITHUB_WORKSPACE/full_build.log
             exit 1
           fi
-          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
-          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android
-          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include
-          file $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
+          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" ]; then
+            echo "Error: NDK toolchain is incomplete, llvm-ar not found" | tee -a $GITHUB_WORKSPACE/full_build.log
+            exit 1
+          fi
+          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib" ]; then
+            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found" | tee -a $GITHUB_WORKSPACE/full_build.log
+            exit 1
+          fi
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          file $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       # Настройка окружения Android NDK
       - name: Set up Android NDK environment
         run: |
+          echo "=== Set up Android NDK environment ===" >> $GITHUB_WORKSPACE/full_build.log
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_WORKSPACE/full_build.log
+          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_WORKSPACE/full_build.log
 
       # --- BOOST ---
       - name: Prepare Boost download script
         run: |
+          echo "=== Prepare Boost download script ===" >> $GITHUB_WORKSPACE/full_build.log
           cat <<'EOF' > download_boost.sh
           #!/bin/bash
           BOOST_URL="$1"
@@ -77,27 +93,34 @@ jobs:
           exit 1
           EOF
           chmod +x download_boost.sh
+          cat download_boost.sh >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Download Boost source (GitHub mirror, with progress & retry)
         run: |
-          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
-          tar -xf boost-1.83.0.tar.xz
-          mv boost-1.83.0 boost_1_83_0
+          echo "=== Download Boost source ===" >> $GITHUB_WORKSPACE/full_build.log
+          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz" >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          tar -xf boost-1.83.0.tar.xz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          mv boost-1.83.0 boost_1_83_0 >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: List files after extracting Boost
-        run: ls -lah
+        run: |
+          echo "=== List files after extracting Boost ===" >> $GITHUB_WORKSPACE/full_build.log
+          ls -lah >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Prepare user-config.jam for Boost (Android arm64-v8a)
         run: |
+          echo "=== Prepare user-config.jam for Boost ===" >> $GITHUB_WORKSPACE/full_build.log
           ANDROID_API=21
           NDK_HOME="$HOME/android-ndk"
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           echo "using clang : android : $TOOLCHAIN/clang++ --target=aarch64-linux-android$ANDROID_API --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" > $HOME/user-config.jam
+          cat $HOME/user-config.jam >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
-          ./bootstrap.sh --with-toolset=clang
+          echo "=== Bootstrap Boost.Build ===" >> $GITHUB_WORKSPACE/full_build.log
+          ./bootstrap.sh --with-toolset=clang >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Build Boost for Android arm64-v8a (bionic, only needed libs)
         working-directory: ./boost_1_83_0
@@ -105,6 +128,7 @@ jobs:
           ANDROID_API: 21
           NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
+          echo "=== Build Boost for Android arm64-v8a ===" >> $GITHUB_WORKSPACE/full_build.log
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           ./b2 toolset=clang-android \
@@ -132,11 +156,12 @@ jobs:
             --with-serialization \
             --with-system \
             --with-thread \
-            -d+2 install -j$(nproc) > boost_build.log 2>&1
+            -d+2 install -j$(nproc) >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Package Boost artifacts
         run: |
-          tar -czvf boost_android_arm64.tar.gz -C boost_android_arm64_install .
+          echo "=== Package Boost artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
+          tar -czvf boost_android_arm64.tar.gz -C boost_android_arm64_install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Upload Boost build log
         if: always()
@@ -154,12 +179,14 @@ jobs:
       # --- TALLOC ---
       - name: Download and extract talloc
         run: |
-          wget https://www.samba.org/ftp/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz
-          tar -xf talloc-2.4.1.tar.gz
-          ls -lah talloc-2.4.1
+          echo "=== Download and extract talloc ===" >> $GITHUB_WORKSPACE/full_build.log
+          wget https://www.samba.org/ftp/talloc/talloc-2.4.1.tar.gz -O talloc-2.4.1.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          tar -xf talloc-2.4.1.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -lah talloc-2.4.1 >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Create talloc cross-answers.txt
         run: |
+          echo "=== Create talloc cross-answers.txt ===" >> $GITHUB_WORKSPACE/full_build.log
           cat << EOF > talloc-2.4.1/cross-answers.txt
           Checking uname sysname type: "Linux"
           Checking uname machine type: "dontcare"
@@ -182,19 +209,28 @@ jobs:
           Checking getconf large file support flags work: OK
           Checking for HAVE_IFACE_IFCONF: FAIL
           EOF
+          cat talloc-2.4.1/cross-answers.txt >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Patch talloc configure for cross-compilation and disable build tests
         run: |
+          echo "=== Patch talloc configure ===" >> $GITHUB_WORKSPACE/full_build.log
           cd talloc-2.4.1
           if [ -f wscript ]; then
             sed -i 's/enable_build_tests=yes/enable_build_tests=no/g' wscript
+            echo "Patched wscript to disable build tests" >> $GITHUB_WORKSPACE/full_build.log
+          else
+            echo "No wscript found, assuming autotools" >> $GITHUB_WORKSPACE/full_build.log
           fi
           export ac_cv_func_malloc_0_nonnull=yes
           export ac_cv_func_realloc_0_nonnull=yes
           export ac_cv_func_memcmp_working=yes
+          echo "Set ac_cv_func_malloc_0_nonnull=yes" >> $GITHUB_WORKSPACE/full_build.log
+          echo "Set ac_cv_func_realloc_0_nonnull=yes" >> $GITHUB_WORKSPACE/full_build.log
+          echo "Set ac_cv_func_memcmp_working=yes" >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Configure and build talloc for Android arm64-v8a (autotools)
         run: |
+          echo "=== Configure and build talloc ===" >> $GITHUB_WORKSPACE/full_build.log
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -208,24 +244,44 @@ jobs:
           ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath \
             --cross-compile --cross-answers=$PWD/cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes > configure.log 2>&1
-          make V=1 -j$(nproc) > make.log 2>&1
-          make install > make_install.log 2>&1
+            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make V=1 -j$(nproc) >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make install >> $GITHUB_WORKSPACE/full_build.log 2>&1
+
+      - name: Display talloc logs on failure
+        if: failure()
+        run: |
+          echo "=== talloc configure.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
+          cat talloc-2.4.1/configure.log >> $GITHUB_WORKSPACE/full_build.log
+          echo "=== talloc make.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
+          cat talloc-2.4.1/make.log >> $GITHUB_WORKSPACE/full_build.log
+          echo "=== talloc make_install.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
+          cat talloc-2.4.1/make_install.log >> $GITHUB_WORKSPACE/full_build.log
+          if [ -f talloc-2.4.1/config.log ]; then
+            echo "=== talloc config.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
+            cat talloc-2.4.1/config.log >> $GITHUB_WORKSPACE/full_build.log
+          fi
+          if [ -f talloc-2.4.1/bin/config.log ]; then
+            echo "=== talloc bin/config.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
+            cat talloc-2.4.1/bin/config.log >> $GITHUB_WORKSPACE/full_build.log
+          fi
 
       - name: Verify talloc install
         run: |
-          ls -l talloc-2.4.1/install/lib
-          ls -l talloc-2.4.1/install/include
+          echo "=== Verify talloc install ===" >> $GITHUB_WORKSPACE/full_build.log
+          ls -l talloc-2.4.1/install/lib >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -l talloc-2.4.1/install/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Package talloc artifacts
         run: |
-          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.1/install .
+          echo "=== Package talloc artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
+          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.1/install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Upload talloc logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talign:build-logs
+          name: talloc-build-logs
           path: |
             talloc-2.4.1/config.log
             talloc-2.4.1/bin/config.log
@@ -241,11 +297,15 @@ jobs:
 
       # --- PROOT ---
       - name: Clone proot
+        if: success()
         run: |
-          git clone --depth=1 https://github.com/Ananbox/proot.git proot
+          echo "=== Clone proot ===" >> $GITHUB_WORKSPACE/full_build.log
+          git clone --depth=1 https://github.com/Ananbox/proot.git proot >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Build proot for Android arm64-v8a (with talloc)
+        if: success()
         run: |
+          echo "=== Build proot for Android arm64-v8a ===" >> $GITHUB_WORKSPACE/full_build.log
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -256,13 +316,15 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.1/install/include"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.1/install/lib -ltalloc"
           cd proot/src
-          make clean > make_clean.log 2>&1
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > make.log 2>&1
-          cp -v proot $GITHUB_WORKSPACE/libproot.so
+          make clean >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Package proot artifacts
+        if: success()
         run: |
-          tar -czvf proot_android_arm64.tar.gz libproot.so
+          echo "=== Package proot artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
+          tar -czvf proot_android_arm64.tar.gz libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Upload proot logs
         if: always()
@@ -274,7 +336,16 @@ jobs:
             proot/src/make.log
 
       - name: Upload proot artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: proot_android_arm64
           path: proot_android_arm64.tar.gz
+
+      # --- Полный лог ---
+      - name: Upload full build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-build-log
+          path: $GITHUB_WORKSPACE/full_build.log
