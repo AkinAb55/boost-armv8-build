@@ -249,10 +249,10 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Werror=implicit-function-declaration"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          # Create cross-answers.txt
+          # Create cross-answers.txt with additional checks for telldir and seekdir
           cat <<EOF >cross-answers.txt
           Checking uname sysname type: "Linux"
           Checking uname machine type: "dontcare"
@@ -274,6 +274,12 @@ jobs:
           Checking for HAVE_SECURE_MKSTEMP: OK
           Checking getconf large file support flags work: OK
           Checking for HAVE_IFACE_IFCONF: FAIL
+          Checking for HAVE_TELLDIR: FAIL
+          Checking for HAVE_SEEKDIR: FAIL
+          Checking for HAVE_SYS_NDIR_H: FAIL
+          Checking for HAVE_SYS_DIR_H: FAIL
+          Checking for HAVE_NDIR_H: FAIL
+          Checking for HAVE_DIR_H: FAIL
           EOF
           # Configure and build
           ./configure build --prefix=$PWD/install --disable-rpath --disable-python --cross-compile --cross-answers=cross-answers.txt \
@@ -318,7 +324,29 @@ jobs:
             exit 1
           fi
 
-      - name: Build proot for Android arm64-v8a
+      - name: Patch proot for Android
+        run: |
+          echo "=== Patch proot for Android ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          cd proot
+          cat << 'EOF' > android-basename.patch
+          --- a/src/cli/cli.c
+          +++ b/src/cli/cli.c
+          @@ -25,6 +25,7 @@
+           #include <string.h>
+           #include <ctype.h>
+           #include <errno.h>
+          +#include <libgen.h>
+           #include <sys/stat.h>
+           #include <sys/types.h>
+           #include <unistd.h>
+          EOF
+          patch -p1 < android-basename.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to apply proot patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            exit 1
+          fi
+          cat android-basename.patch >> $GITHUB_WORKSPACE/full_build.log
+          - name: Build proot for Android arm64-v8a
         if: success()
         run: |
           echo "=== Build proot for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -329,9 +357,10 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Werror=implicit-function-declaration"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
           export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
+          export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
           make clean 2>&1 | tee -a make_clean.log $GITHUB_WORKSPACE/error_summary.log
           cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
@@ -342,7 +371,6 @@ jobs:
             echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
-          # Build proot-userland
           make clean 2>&1 | tee -a make_clean_userland.log $GITHUB_WORKSPACE/error_summary.log
           cat make_clean_userland.log >> $GITHUB_WORKSPACE/full_build.log
           CFLAGS="$CFLAGS -DUSERLAND" make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make_userland.log $GITHUB_WORKSPACE/error_summary.log
