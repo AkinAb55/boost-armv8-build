@@ -7,10 +7,9 @@ on:
 
 jobs:
   build-all:
-    runs-on: ubuntu-22.04 # Закрепляем версию раннера для стабильности кэша
+    runs-on: ubuntu-22.04
 
     steps:
-      # Проверка синтаксиса YAML
       - name: Validate YAML syntax
         run: |
           echo "=== Validate YAML syntax ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -21,7 +20,6 @@ jobs:
             exit 1
           fi
 
-      # Инициализация лог-файлов
       - name: Initialize log files
         run: |
           echo "=== Initialize log files ===" | tee -a $GITHUB_WORKSPACE/full_build.log
@@ -34,13 +32,11 @@ jobs:
           echo "Log files created successfully" >> $GITHUB_WORKSPACE/full_build.log
           ls -l $GITHUB_WORKSPACE >> $GITHUB_WORKSPACE/full_build.log
 
-      # Клонирование репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      # Логирование checkout
       - name: Log checkout
         run: |
           echo "=== Checkout repository ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -52,7 +48,6 @@ jobs:
           git status >> $GITHUB_WORKSPACE/full_build.log
           pwd >> $GITHUB_WORKSPACE/full_build.log
 
-      # Установка зависимостей
       - name: Install dependencies (host tools)
         run: |
           echo "=== Install dependencies ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -65,7 +60,6 @@ jobs:
           which patch >> $GITHUB_WORKSPACE/full_build.log
           dpkg -l | grep patch >> $GITHUB_WORKSPACE/full_build.log
 
-      # Кэширование Android NDK
       - name: Cache Android NDK
         id: cache-ndk
         uses: actions/cache@v4
@@ -73,7 +67,6 @@ jobs:
           path: $HOME/android-ndk
           key: ndk-r26c-${{ runner.os }}
 
-      # Загрузка и распаковка Android NDK
       - name: Download and extract Android NDK (r26c)
         if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
@@ -87,7 +80,6 @@ jobs:
           fi
           ls -l $HOME/android-ndk >> $GITHUB_WORKSPACE/full_build.log
 
-      # Проверка целостности Android NDK
       - name: Verify Android NDK integrity
         run: |
           echo "=== Verify Android NDK integrity ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -105,7 +97,6 @@ jobs:
           fi
           ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin >> $GITHUB_WORKSPACE/full_build.log
 
-      # Настройка окружения Android NDK
       - name: Set up Android NDK environment
         run: |
           echo "=== Set up Android NDK environment ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -184,7 +175,7 @@ jobs:
         run: |
           echo "=== Build Boost for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64=sysroot"
           ./b2 toolset=clang-android \
             cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
             linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
@@ -253,12 +244,16 @@ jobs:
            from waflib import Options
            
            def configure(conf):
-          @@ -20,6 +21,9 @@ def configure(conf):
+          @@ -20,6 +21,13 @@ def configure(conf):
                conf.check_function('strndup', 'string.h')
                conf.check_function('strnlen', 'string.h')
            
           +    # Skip replace tests for Android
           +    conf.env['SKIP_REPLACE_TESTS'] = True
+          +    if conf.env['SKIP_REPLACE_TESTS']:
+          +        conf.env['replace_test_sources'] = []
+          +        conf.msg('Skipping replace tests', 'Disabled for Android', color='YELLOW')
+          +        return
           +
                # Check for large file support
                conf.check_large_file()
@@ -286,12 +281,16 @@ jobs:
           	return 0;
            }
           EOF
+          # Verify patch file content
+          cat skip-replace-tests.patch >> $GITHUB_WORKSPACE/full_build.log
           patch -p1 < skip-replace-tests.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           if [ $? -ne 0 ]; then
             echo "Error: Failed to apply talloc skip-replace-tests patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
-          cat skip-replace-tests.patch >> $GITHUB_WORKSPACE/full_build.log
+          # Verify patched files
+          grep "SKIP_REPLACE_TESTS" lib/replace/wscript >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: SKIP_REPLACE_TESTS not found in wscript" >> $GITHUB_WORKSPACE/error_summary.log
+          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: SKIP_REPLACE_TESTS not found in os2_delete.c" >> $GITHUB_WORKSPACE/error_summary.log
 
       - name: Configure and build talloc static
         run: |
@@ -306,7 +305,7 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          # Create cross-answers.txt with additional checks for telldir and seekdir
+          # Create cross-answers.txt
           cat <<EOF >cross-answers.txt
           Checking uname sysname type: "Linux"
           Checking uname machine type: "dontcare"
@@ -344,7 +343,8 @@ jobs:
             echo "Error: talloc configure failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
-          make V=1 -j$(nproc) 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
+          # Build only talloc.o to avoid tests
+          make V=1 -j$(nproc) talloc.o 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
           if [ $? -ne 0 ]; then
             echo "Error: talloc build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
@@ -377,6 +377,7 @@ jobs:
             echo "Error: Failed to clone proot" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
+          ls -l proot/src >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Patch proot for Android
         run: |
@@ -400,11 +401,41 @@ jobs:
           +#else
           +#include <libgen.h>
           +#endif
-           #include <sys/stat.h>
            #include <sys/types.h>
            #include <unistd.h>
+          
           EOF
+          # Verify patch file content
+          cat android-basename.patch >> $GITHUB_WORKSPACE/full_build.log
           patch -p1 < android-basename.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to apply proot patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            exit 1
+          fi
+          # Verify patched file
+          grep "basename" src/cli/cli.c >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: basename patch not applied correctly" >> $GITHUB_WORKSPACE/error_summary.log
+
+      - name: Build proot for Android arm64-v8a
+        if: success()
+        run: |
+          echo "=== Build proot for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          export ANDROID_API=21
+          export NDK_HOME="$HOME/android-ndk"
+          export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
+          export AR="$TOOLCHAIN/llvm-ar"
+          export RANLIB="$TOOLCHAIN/llvm-ranlib"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
+          export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
+          export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
+          cd proot/src
+          make clean 2>&1 | tee -a make_clean.log $GITHUB_WORKSPACE/error_summary.log
+          cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
+          cat make.log >> $GITHUB_WORKSPACE/full_build.log
+          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
           if [ $? -ne 0 ]; then
             echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
