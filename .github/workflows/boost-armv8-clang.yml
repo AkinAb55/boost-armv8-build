@@ -239,94 +239,9 @@ jobs:
           fi
           ls -lah talloc-2.4.2 >> $GITHUB_WORKSPACE/full_build.log
 
-      - name: Apply patch to talloc
+      - name: Configure and build talloc static
         run: |
-          echo "=== Apply patch to talloc ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          cat << 'EOF' > talloc-android.patch
-          --- a/lib/replace/wscript
-          +++ b/lib/replace/wscript
-          @@ -1,5 +1,6 @@
-           #!/usr/bin/env python
-           
-          +import os
-           from waflib import Options
-           
-           def configure(conf):
-          @@ -20,6 +21,22 @@ def configure(conf):
-               conf.check_function('strndup', 'string.h')
-               conf.check_function('strnlen', 'string.h')
-           
-          +    # Skip tests that fail on Android Bionic
-          +    conf.env['SKIP_TELLDIR'] = True
-          +    conf.env['SKIP_SEEKDIR'] = True
-          +    conf.define('HAVE_MINIX_CONFIG_H', 0)
-          +    conf.define('HAVE_CRYPT_H', 0)
-          +    conf.define('HAVE_ACL_LIBACL_H', 0)
-          +    conf.define('HAVE_TELLDIR', 0)
-          +    conf.define('HAVE_SEEKDIR', 0)
-          +    conf.define('HAVE_COMPARISON_FN_T', 0)
-          +    conf.define('HAVE_STANDARDS_H', 0)
-          +    conf.define('HAVE_VARARG_H', 0)
-          +    conf.define('HAVE_KRB5_H', 0)
-          +    conf.define('HAVE_NDIR_H', 0)
-          +    conf.define('HAVE_SHADOW_H', 0)
-          +    conf.define('HAVE_SYS_ACL_H', 0)
-          +
-               # Check for large file support
-               conf.check_large_file()
-           
-          --- a/lib/replace/tests/os2_delete.c
-          +++ b/lib/replace/tests/os2_delete.c
-          @@ -65,7 +65,9 @@ static int test_readdir_os2_delete(void)
-          		closedir(dirp);
-          		return -1;
-          	}
-          +#ifndef SKIP_TELLDIR
-          	off = telldir(dirp);
-          +#endif
-          	while ((dp = readdir(dirp)) != NULL) {
-          		char *fname;
-          		if (strncmp(dp->d_name, "test", 4) != 0) {
-          @@ -82,7 +84,9 @@ static int test_readdir_os2_delete(void)
-          			continue;
-          		}
-          	}
-          +#ifndef SKIP_TELLDIR
-          	seekdir(dirp, off);
-          +#endif
-          	closedir(dirp);
-          	return 0;
-           }
-          --- a/wscript
-          +++ b/wscript
-          @@ -1,5 +1,6 @@
-           #!/usr/bin/env python
-           
-          +import os
-           from waflib import Options
-           
-           def configure(conf):
-          @@ -10,6 +11,7 @@ def configure(conf):
-               conf.env.CFLAGS = ['-g', '-Wall', '-Werror']
-               conf.env.LDFLAGS = []
-           
-          +    conf.env['SKIP_FAULT_HANDLING'] = True
-               conf.check_large_file()
-               conf.check_inline()
-               conf.check_function('strerror_r', 'string.h')
-          EOF
-          cd talloc-2.4.2
-          patch -p1 < ../talloc-android.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply talloc patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-          cat ../talloc-android.patch >> $GITHUB_WORKSPACE/full_build.log
-          ls -l talloc-2.4.2 >> $GITHUB_WORKSPACE/full_build.log
-
-      - name: Configure and build talloc
-        run: |
-          echo "=== Configure and build talloc ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Configure and build talloc static ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -334,12 +249,34 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Werror=implicit-function-declaration"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          ./configure --host=aarch64-linux-android --prefix=$PWD/install \
-            --disable-python --without-gettext --disable-rpath --disable-fault-handling \
-            --cross-compile \
+          # Create cross-answers.txt
+          cat <<EOF >cross-answers.txt
+          Checking uname sysname type: "Linux"
+          Checking uname machine type: "dontcare"
+          Checking uname release type: "dontcare"
+          Checking uname version type: "dontcare"
+          Checking simple C program: OK
+          rpath library support: OK
+          -Wl,--version-script support: FAIL
+          Checking getconf LFS_CFLAGS: OK
+          Checking for large file support without additional flags: OK
+          Checking for -D_FILE_OFFSET_BITS=64: OK
+          Checking for -D_LARGE_FILES: OK
+          Checking correct behavior of strtoll: OK
+          Checking for working strptime: OK
+          Checking for C99 vsnprintf: OK
+          Checking for HAVE_SHARED_MMAP: OK
+          Checking for HAVE_MREMAP: OK
+          Checking for HAVE_INCOHERENT_MMAP: OK
+          Checking for HAVE_SECURE_MKSTEMP: OK
+          Checking getconf large file support flags work: OK
+          Checking for HAVE_IFACE_IFCONF: FAIL
+          EOF
+          # Configure and build
+          ./configure build --prefix=$PWD/install --disable-rpath --disable-python --cross-compile --cross-answers=cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
             2>&1 | tee -a configure.log $GITHUB_WORKSPACE/error_summary.log
           cat configure.log >> $GITHUB_WORKSPACE/full_build.log
@@ -353,17 +290,15 @@ jobs:
             echo "Error: talloc build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
-          make install 2>&1 | tee -a make_install.log $GITHUB_WORKSPACE/error_summary.log
-          cat make_install.log >> $GITHUB_WORKSPACE/full_build.log
-          if [ $? -ne 0 ]; then
-            echo "Error: talloc install failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
+          mkdir -p install/include install/lib
+          "$AR" rcs install/lib/libtalloc.a bin/default/talloc*.o
+          cp -f talloc.h install/include
+          ls -l install/lib install/include >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Display talloc errors
         run: |
           echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          for log in talloc-2.4.2/{configure.log,make.log,make_install.log,bin/config.log}; do
+          for log in talloc-2.4.2/{configure.log,make.log}; do
             if [ -f "$log" ]; then
               echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
               grep -i -E "error:|configure: error|KeyError|waflib.Errors" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
@@ -394,14 +329,38 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Werror=implicit-function-declaration"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
+          export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
           cd proot/src
           make clean 2>&1 | tee -a make_clean.log $GITHUB_WORKSPACE/error_summary.log
           cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
+          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
           if [ $? -ne 0 ]; then
             echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
+          # Build proot-userland
+          make clean 2>&1 | tee -a make_clean_userland.log $GITHUB_WORKSPACE/error_summary.log
+          cat make_clean_userland.log >> $GITHUB_WORKSPACE/full_build.log
+          CFLAGS="$CFLAGS -DUSERLAND" make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make_userland.log $GITHUB_WORKSPACE/error_summary.log
+          cat make_userland.log >> $GITHUB_WORKSPACE/full_build.log
+          cp -v proot $GITHUB_WORKSPACE/proot-userland >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: proot-userland build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            exit 1
+          fi
+
+      - name: Display proot errors
+        run: |
+          echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          for log in proot/src/{make_clean.log,make.log,make_clean_userland.log,make_userland.log}; do
+            if [ -f "$log" ]; then
+              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
+              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            else
+              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            fi
+          done
