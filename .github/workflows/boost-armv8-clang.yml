@@ -188,22 +188,22 @@ jobs:
       - name: Download and extract talloc
         run: |
           echo "=== Download and extract talloc ===" >> $GITHUB_WORKSPACE/full_build.log
-          wget https://www.samba.org/ftp/talloc/talloc-2.3.4.tar.gz -O talloc-2.3.4.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          tar -xf talloc-2.3.4.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          ls -lah talloc-2.3.4 >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          wget https://www.samba.org/ftp/talloc/talloc-2.1.14.tar.gz -O talloc-2.1.14.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          tar -xf talloc-2.1.14.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -lah talloc-2.1.14 >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Check for WAF usage
         run: |
           echo "=== Check for WAF usage ===" >> $GITHUB_WORKSPACE/full_build.log
-          if [ -f talloc-2.3.4/wscript ]; then
-            echo "Error: talloc-2.3.4 uses WAF, which is not supported for Android cross-compilation. Please use a version with Autotools." | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          if [ -f talloc-2.1.14/wscript ]; then
+            echo "Error: talloc-2.1.14 uses WAF, which is not supported for Android cross-compilation. Please use a version with Autotools." | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
 
       - name: Create talloc cross-answers.txt
         run: |
           echo "=== Create talloc cross-answers.txt ===" >> $GITHUB_WORKSPACE/full_build.log
-          cat << EOF > talloc-2.3.4/cross-answers.txt
+          cat << EOF > talloc-2.1.14/cross-answers.txt
           Checking uname sysname type: "Linux"
           Checking uname machine type: "dontcare"
           Checking uname release type: "dontcare"
@@ -285,7 +285,7 @@ jobs:
           Checking for comparison_fn_t: NO
           Checking for offset_t: NO
           EOF
-          cat talloc-2.3.4/cross-answers.txt >> $GITHUB_WORKSPACE/full_build.log
+          cat talloc-2.1.14/cross-answers.txt >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Configure and build talloc for Android arm64-v8a (autotools)
         run: |
@@ -299,7 +299,7 @@ jobs:
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
-          cd talloc-2.3.4
+          cd talloc-2.1.14
           ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath \
             --cross-compile --cross-answers=$PWD/cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
@@ -314,7 +314,7 @@ jobs:
         if: failure()
         run: |
           echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          for log in talloc-2.3.4/{configure.log,make.log,make_install.log,config.log}; do
+          for log in talloc-2.1.14/{configure.log,make.log,make_install.log,config.log}; do
             if [ -f "$log" ]; then
               echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
               grep -i -E "error:|configure: error" "$log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -324,13 +324,13 @@ jobs:
       - name: Verify talloc install
         run: |
           echo "=== Verify talloc install ===" >> $GITHUB_WORKSPACE/full_build.log
-          ls -l talloc-2.3.4/install/lib >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          ls -l talloc-2.3.4/install/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -l talloc-2.1.14/install/lib >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          ls -l talloc-2.1.14/install/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Package talloc artifacts
         run: |
           echo "=== Package talloc artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
-          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.3.4/install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.1.14/install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       - name: Upload talloc logs
         if: always()
@@ -338,10 +338,10 @@ jobs:
         with:
           name: talloc-build-logs
           path: |
-            talloc-2.3.4/config.log
-            talloc-2.3.4/configure.log
-            talloc-2.3.4/make.log
-            talloc-2.3.4/make_install.log
+            talloc-2.1.14/config.log
+            talloc-2.1.14/configure.log
+            talloc-2.1.14/make.log
+            talloc-2.1.14/make_install.log
 
       - name: Upload talloc artifact
         uses: actions/upload-artifact@v4
@@ -367,8 +367,8 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.3.4/install/include"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.3.4/install/lib -ltalloc"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.1.14/install/include"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.1.14/install/lib -ltalloc"
           cd proot/src
           make clean > make_clean.log 2>&1
           cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
