@@ -44,15 +44,15 @@ jobs:
         run: |
           echo "=== Verify Android NDK integrity ===" >> $GITHUB_WORKSPACE/full_build.log
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" ]; then
-            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found" | tee -a $GITHUB_WORKSPACE/full_build.log
+            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ar not found" | tee -a $GITHUB_WORKSPACE/full_build.log
+            echo "Error: NDK toolchain is incomplete, llvm-ar not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found" | tee -a $GITHUB_WORKSPACE/full_build.log
+            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
           ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin >> $GITHUB_WORKSPACE/full_build.log 2>&1
@@ -156,7 +156,15 @@ jobs:
             --with-serialization \
             --with-system \
             --with-thread \
-            -d+2 install -j$(nproc) >> $GITHUB_WORKSPACE/full_build.log 2>&1
+            -d+2 install -j$(nproc) > boost_build.log 2>&1
+          cat boost_build.log >> $GITHUB_WORKSPACE/full_build.log
+
+      - name: Display Boost errors on failure
+        if: failure()
+        working-directory: ./boost_1_83_0
+        run: |
+          echo "=== Boost Build Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          grep -i -E "error:|[Bb]uild failed" boost_build.log | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in boost_build.log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
 
       - name: Package Boost artifacts
         run: |
@@ -244,27 +252,23 @@ jobs:
           ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath \
             --cross-compile --cross-answers=$PWD/cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          make V=1 -j$(nproc) >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          make install >> $GITHUB_WORKSPACE/full_build.log 2>&1
+            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes > configure.log 2>&1
+          cat configure.log >> $GITHUB_WORKSPACE/full_build.log
+          make V=1 -j$(nproc) > make.log 2>&1
+          cat make.log >> $GITHUB_WORKSPACE/full_build.log
+          make install > make_install.log 2>&1
+          cat make_install.log >> $GITHUB_WORKSPACE/full_build.log
 
-      - name: Display talloc logs on failure
+      - name: Display talloc errors on failure
         if: failure()
         run: |
-          echo "=== talloc configure.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-          cat talloc-2.4.1/configure.log >> $GITHUB_WORKSPACE/full_build.log
-          echo "=== talloc make.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-          cat talloc-2.4.1/make.log >> $GITHUB_WORKSPACE/full_build.log
-          echo "=== talloc make_install.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-          cat talloc-2.4.1/make_install.log >> $GITHUB_WORKSPACE/full_build.log
-          if [ -f talloc-2.4.1/config.log ]; then
-            echo "=== talloc config.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-            cat talloc-2.4.1/config.log >> $GITHUB_WORKSPACE/full_build.log
-          fi
-          if [ -f talloc-2.4.1/bin/config.log ]; then
-            echo "=== talloc bin/config.log ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-            cat talloc-2.4.1/bin/config.log >> $GITHUB_WORKSPACE/full_build.log
-          fi
+          echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          for log in talloc-2.4.1/{configure.log,make.log,make_install.log,config.log,bin/config.log}; do
+            if [ -f "$log" ]; then
+              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+              grep -i -E "error:|configure: error" "$log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+            fi
+          done
 
       - name: Verify talloc install
         run: |
@@ -316,9 +320,22 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.1/install/include"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.1/install/lib -ltalloc"
           cd proot/src
-          make clean >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make clean > make_clean.log 2>&1
+          cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > make.log 2>&1
+          cat make.log >> $GITHUB_WORKSPACE/full_build.log
           cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
+
+      - name: Display proot errors on failure
+        if: failure()
+        run: |
+          echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          for log in proot/src/{make_clean.log,make.log}; do
+            if [ -f "$log" ]; then
+              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+            fi
+          done
 
       - name: Package proot artifacts
         if: success()
@@ -342,7 +359,14 @@ jobs:
           name: proot_android_arm64
           path: proot_android_arm64.tar.gz
 
-      # --- Полный лог ---
+      # --- Логи ---
+      - name: Upload error summary log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-summary-log
+          path: $GITHUB_WORKSPACE/error_summary.log
+
       - name: Upload full build log
         if: always()
         uses: actions/upload-artifact@v4
