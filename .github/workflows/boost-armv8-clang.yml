@@ -7,23 +7,48 @@ on:
 
 jobs:
   build-all:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Закрепляем версию раннера для стабильности кэша
 
     steps:
+      # Клонирование репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Установка зависимостей (инструменты хоста)
       - name: Install dependencies (host tools)
         run: |
           sudo apt-get update
           sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config
 
+      # Кэширование Android NDK
+      - name: Cache Android NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: $HOME/android-ndk
+          key: ndk-r26c-${{ runner.os }}
+
+      # Загрузка и распаковка Android NDK (r26c)
       - name: Download and extract Android NDK (r26c)
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
           unzip -q ndk.zip
           mv android-ndk-r26c $HOME/android-ndk
 
+      # Проверка целостности Android NDK
+      - name: Verify Android NDK integrity
+        run: |
+          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" ]; then
+            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found"
+            exit 1
+          fi
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include
+          file $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
+
+      # Настройка окружения Android NDK
       - name: Set up Android NDK environment
         run: |
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
@@ -107,12 +132,24 @@ jobs:
             --with-serialization \
             --with-system \
             --with-thread \
-            -d+2 install -j$(nproc)
+            -d+2 install -j$(nproc) > boost_build.log 2>&1
 
       - name: Package Boost artifacts
-        if: success()
         run: |
-          tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
+          tar -czvf boost_android_arm64.tar.gz -C boost_android_arm64_install .
+
+      - name: Upload Boost build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boost-build-log
+          path: boost_1_83_0/boost_build.log
+
+      - name: Upload Boost artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boost_android_arm64
+          path: boost_android_arm64.tar.gz
 
       # --- TALLOC ---
       - name: Download and extract talloc
@@ -121,19 +158,42 @@ jobs:
           tar -xf talloc-2.4.1.tar.gz
           ls -lah talloc-2.4.1
 
+      - name: Create talloc cross-answers.txt
+        run: |
+          cat << EOF > talloc-2.4.1/cross-answers.txt
+          Checking uname sysname type: "Linux"
+          Checking uname machine type: "dontcare"
+          Checking uname release type: "dontcare"
+          Checking uname version type: "dontcare"
+          Checking simple C program: OK
+          rpath library support: OK
+          -Wl,--version-script support: FAIL
+          Checking getconf LFS_CFLAGS: OK
+          Checking for large file support without additional flags: OK
+          Checking for -D_FILE_OFFSET_BITS=64: OK
+          Checking for -D_LARGE_FILES: OK
+          Checking correct behavior of strtoll: OK
+          Checking for working strptime: OK
+          Checking for C99 vsnprintf: OK
+          Checking for HAVE_SHARED_MMAP: OK
+          Checking for HAVE_MREMAP: OK
+          Checking for HAVE_INCOHERENT_MMAP: OK
+          Checking for HAVE_SECURE_MKSTEMP: OK
+          Checking getconf large file support flags work: OK
+          Checking for HAVE_IFACE_IFCONF: FAIL
+          EOF
+
       - name: Patch talloc configure for cross-compilation and disable build tests
         run: |
-          # Some versions of talloc's configure/waf try to run cross-built binaries for feature detection (which fails).
-          # Patch configure to force assume working functions, skip program runs, and disable build tests.
           cd talloc-2.4.1
-          sed -i 's/enable_build_tests=yes/enable_build_tests=no/g' wscript
-          # Also forcibly set config variables if needed (for old waf)
+          if [ -f wscript ]; then
+            sed -i 's/enable_build_tests=yes/enable_build_tests=no/g' wscript
+          fi
           export ac_cv_func_malloc_0_nonnull=yes
           export ac_cv_func_realloc_0_nonnull=yes
           export ac_cv_func_memcmp_working=yes
 
       - name: Configure and build talloc for Android arm64-v8a (autotools)
-        continue-on-error: true
         run: |
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
@@ -146,24 +206,38 @@ jobs:
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.1
           ./configure --host=aarch64-linux-android --prefix=$PWD/install --disable-python --without-gettext --disable-rpath \
+            --cross-compile --cross-answers=$PWD/cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes || true
-          make -j$(nproc) || true
-          make install || true
+            ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ac_cv_func_memcmp_working=yes > configure.log 2>&1
+          make V=1 -j$(nproc) > make.log 2>&1
+          make install > make_install.log 2>&1
 
-      - name: Upload config.log if talloc build fails
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: talloc-config-log
-          path: |
-            talloc-2.4.1/bin/config.log
-            talloc-2.4.1/config.log
+      - name: Verify talloc install
+        run: |
+          ls -l talloc-2.4.1/install/lib
+          ls -l talloc-2.4.1/install/include
 
       - name: Package talloc artifacts
-        if: success()
         run: |
           tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.1/install .
+
+      - name: Upload talloc logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talign:build-logs
+          path: |
+            talloc-2.4.1/config.log
+            talloc-2.4.1/bin/config.log
+            talloc-2.4.1/configure.log
+            talloc-2.4.1/make.log
+            talloc-2.4.1/make_install.log
+
+      - name: Upload talloc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: talloc_android_arm64
+          path: talloc_android_arm64.tar.gz
 
       # --- PROOT ---
       - name: Clone proot
@@ -182,32 +256,24 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.1/install/include"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.1/install/lib -ltalloc"
           cd proot/src
-          make clean
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          make clean > make_clean.log 2>&1
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > make.log 2>&1
           cp -v proot $GITHUB_WORKSPACE/libproot.so
 
       - name: Package proot artifacts
-        if: success()
         run: |
           tar -czvf proot_android_arm64.tar.gz libproot.so
 
-      # --- FINAL ARTIFACTS ---
-      - name: Upload Boost artifact
-        if: success()
+      - name: Upload proot logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: boost_android_arm64
-          path: boost_android_arm64.tar.gz
-
-      - name: Upload talloc artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: talloc_android_arm64
-          path: talloc_android_arm64.tar.gz
+          name: proot-build-logs
+          path: |
+            proot/src/make_clean.log
+            proot/src/make.log
 
       - name: Upload proot artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: proot_android_arm64
