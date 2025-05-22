@@ -21,9 +21,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      # Логирование checkout
+      - name: Log checkout
         run: |
           echo "=== Checkout repository ===" >> $GITHUB_WORKSPACE/full_build.log
           git checkout main >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to checkout repository" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       # Установка зависимостей (инструменты хоста)
       - name: Install dependencies (host tools)
@@ -178,7 +184,7 @@ jobs:
             echo "Error: Boost build failed" >> $GITHUB_WORKSPACE/error_summary.log
           fi
 
-      - name: Display Boost errors on failure
+      - name: Display Boost errors
         if: always()
         working-directory: ./boost_1_83_0
         run: |
@@ -332,7 +338,7 @@ jobs:
             echo "Error: talloc build failed" >> $GITHUB_WORKSPACE/error_summary.log
           fi
 
-      - name: Display talloc errors on failure
+      - name: Display talloc errors
         if: always()
         run: |
           echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -413,7 +419,7 @@ jobs:
             echo "Error: proot build failed" >> $GITHUB_WORKSPACE/error_summary.log
           fi
 
-      - name: Display proot errors on failure
+      - name: Display proot errors
         if: always()
         run: |
           echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
