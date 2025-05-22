@@ -346,7 +346,8 @@ jobs:
             exit 1
           fi
           cat android-basename.patch >> $GITHUB_WORKSPACE/full_build.log
-          - name: Build proot for Android arm64-v8a
+
+      - name: Build proot for Android arm64-v8a
         if: success()
         run: |
           echo "=== Build proot for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
