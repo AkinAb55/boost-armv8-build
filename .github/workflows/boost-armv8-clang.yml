@@ -243,7 +243,7 @@ jobs:
         run: |
           echo "=== Patch talloc to skip replace tests ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           cd talloc-2.4.2
-          cat << 'EOF' > skip-replace-tests.patch
+          cat > skip-replace-tests.patch <<- 'EOF'
           --- a/lib/replace/wscript
           +++ b/lib/replace/wscript
           @@ -1,5 +1,6 @@
@@ -345,7 +345,6 @@ jobs:
             exit 1
           fi
           make V=1 -j$(nproc) 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
-         Usual file permissions for others: read and execute
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
           if [ $? -ne 0 ]; then
             echo "Error: talloc build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
@@ -383,7 +382,7 @@ jobs:
         run: |
           echo "=== Patch proot for Android ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           cd proot
-          cat << 'EOF' > android-basename.patch
+          cat > android-basename.patch <<- 'EOF'
           --- a/src/cli/cli.c
           +++ b/src/cli/cli.c
           @@ -25,6 +25,24 @@
@@ -406,33 +405,6 @@ jobs:
            #include <unistd.h>
           EOF
           patch -p1 < android-basename.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply proot patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-          cat android-basename.patch >> $GITHUB_WORKSPACE/full_build.log
-
-      - name: Build proot for Android arm64-v8a
-        if: success()
-        run: |
-          echo "=== Build proot for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          export ANDROID_API=21
-          export NDK_HOME="$HOME/android-ndk"
-          export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
-          export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
-          export AR="$TOOLCHAIN/llvm-ar"
-          export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
-          export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
-          export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
-          cd proot/src
-          make clean 2>&1 | tee -a make_clean.log $GITHUB_WORKSPACE/error_summary.log
-          cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
-          cat make.log >> $GITHUB_WORKSPACE/full_build.log
-          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
           if [ $? -ne 0 ]; then
             echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
