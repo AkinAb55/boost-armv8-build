@@ -415,4 +415,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: error-summary-log
-          p
+          path: $GITHUB_WORKSPACE/error_summary.log
+
+      - name: Upload full build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-build-log
+          path: $GITHUB_WORKSPACE/full_build.log
