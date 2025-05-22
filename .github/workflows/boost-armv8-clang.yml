@@ -10,17 +10,30 @@ jobs:
     runs-on: ubuntu-22.04 # Закрепляем версию раннера для стабильности кэша
 
     steps:
+      # Инициализация лог-файлов
+      - name: Initialize log files
+        run: |
+          touch $GITHUB_WORKSPACE/error_summary.log $GITHUB_WORKSPACE/full_build.log
+          echo "=== Build started ===" >> $GITHUB_WORKSPACE/full_build.log
+
       # Клонирование репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+        run: |
+          echo "=== Checkout repository ===" >> $GITHUB_WORKSPACE/full_build.log
+          git checkout main >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       # Установка зависимостей (инструменты хоста)
       - name: Install dependencies (host tools)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config patch
           echo "=== Install dependencies ===" >> $GITHUB_WORKSPACE/full_build.log
+          sudo apt-get update >> $GITHUB_WORKSPACE/full_build.log 2>&1
           sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config patch >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to install dependencies" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       # Кэширование Android NDK
       - name: Cache Android NDK
@@ -38,6 +51,9 @@ jobs:
           wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip >> $GITHUB_WORKSPACE/full_build.log 2>&1
           unzip -q ndk.zip >> $GITHUB_WORKSPACE/full_build.log 2>&1
           mv android-ndk-r26c $HOME/android-ndk >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to download or extract NDK" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       # Проверка целостности Android NDK
       - name: Verify Android NDK integrity
@@ -58,7 +74,6 @@ jobs:
           ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin >> $GITHUB_WORKSPACE/full_build.log 2>&1
           ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android >> $GITHUB_WORKSPACE/full_build.log 2>&1
           ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          file $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang >> $GITHUB_WORKSPACE/full_build.log 2>&1
 
       # Настройка окружения Android NDK
       - name: Set up Android NDK environment
@@ -79,33 +94,31 @@ jobs:
           BOOST_ARCHIVE="$2"
           MAX_ATTEMPTS=5
           for attempt in $(seq 1 $MAX_ATTEMPTS); do
-              echo "Attempt $attempt of $MAX_ATTEMPTS"
-              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
+              echo "Attempt $attempt of $MAX_ATTEMPTS" >> $GITHUB_WORKSPACE/full_build.log
+              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL" >> $GITHUB_WORKSPACE/full_build.log 2>&1
               if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
-                  echo "Download successful."
+                  echo "Download successful." >> $GITHUB_WORKSPACE/full_build.log
                   exit 0
               else
-                  echo "Download failed, retrying..."
+                  echo "Download failed, retrying..." >> $GITHUB_WORKSPACE/full_build.log
                   sleep 3
               fi
           done
-          echo "Failed to download Boost after $MAX_ATTEMPTS attempts."
+          echo "Error: Failed to download Boost after $MAX_ATTEMPTS attempts" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           exit 1
           EOF
           chmod +x download_boost.sh
           cat download_boost.sh >> $GITHUB_WORKSPACE/full_build.log
 
-      - name: Download Boost source (GitHub mirror, with progress & retry)
+      - name: Download Boost source
         run: |
           echo "=== Download Boost source ===" >> $GITHUB_WORKSPACE/full_build.log
           ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz" >> $GITHUB_WORKSPACE/full_build.log 2>&1
           tar -xf boost-1.83.0.tar.xz >> $GITHUB_WORKSPACE/full_build.log 2>&1
           mv boost-1.83.0 boost_1_83_0 >> $GITHUB_WORKSPACE/full_build.log 2>&1
-
-      - name: List files after extracting Boost
-        run: |
-          echo "=== List files after extracting Boost ===" >> $GITHUB_WORKSPACE/full_build.log
-          ls -lah >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to download or extract Boost" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Prepare user-config.jam for Boost (Android arm64-v8a)
         run: |
@@ -121,8 +134,11 @@ jobs:
         run: |
           echo "=== Bootstrap Boost.Build ===" >> $GITHUB_WORKSPACE/full_build.log
           ./bootstrap.sh --with-toolset=clang >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Boost bootstrap failed" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
-      - name: Build Boost for Android arm64-v8a (bionic, only needed libs)
+      - name: Build Boost for Android arm64-v8a
         working-directory: ./boost_1_83_0
         env:
           ANDROID_API: 21
@@ -158,18 +174,28 @@ jobs:
             --with-thread \
             -d+2 install -j$(nproc) > boost_build.log 2>&1
           cat boost_build.log >> $GITHUB_WORKSPACE/full_build.log
+          if [ $? -ne 0 ]; then
+            echo "Error: Boost build failed" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Display Boost errors on failure
-        if: failure()
+        if: always()
         working-directory: ./boost_1_83_0
         run: |
           echo "=== Boost Build Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          grep -i -E "error:|[Bb]uild failed" boost_build.log | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in boost_build.log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          if [ -f boost_build.log ]; then
+            grep -i -E "error:|[Bb]uild failed" boost_build.log | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in boost_build.log" | tee -a $GITHUB_WORKSPACE/error_summary.log
+          else
+            echo "Error: boost_build.log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Package Boost artifacts
         run: |
           echo "=== Package Boost artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
           tar -czvf boost_android_arm64.tar.gz -C boost_android_arm64_install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to package Boost artifacts" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Upload Boost build log
         if: always()
@@ -179,6 +205,7 @@ jobs:
           path: boost_1_83_0/boost_build.log
 
       - name: Upload Boost artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: boost_android_arm64
@@ -191,6 +218,9 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
           tar -xf talloc-2.4.2.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
           ls -lah talloc-2.4.2 >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to download or extract talloc" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Apply patch to talloc for Android compatibility
         run: |
@@ -205,7 +235,7 @@ jobs:
            from waflib import Options
            
            def configure(conf):
-          @@ -23,6 +24,15 @@ def configure(conf):
+          @@ -23,6 +24,22 @@ def configure(conf):
                conf.define('HAVE_STRNDUP', 1)
                conf.define('HAVE_STRNLEN', 1)
            
@@ -217,6 +247,13 @@ jobs:
           +    conf.define('HAVE_ACL_LIBACL_H', 0)
           +    conf.define('HAVE_TELLDIR', 0)
           +    conf.define('HAVE_SEEKDIR', 0)
+          +    conf.define('HAVE_COMPARISON_FN_T', 0)
+          +    conf.define('HAVE_STANDARDS_H', 0)
+          +    conf.define('HAVE_VARARG_H', 0)
+          +    conf.define('HAVE_KRB5_H', 0)
+          +    conf.define('HAVE_NDIR_H', 0)
+          +    conf.define('HAVE_SHADOW_H', 0)
+          +    conf.define('HAVE_SYS_ACL_H', 0)
           +
                # Check for large file support
                conf.check_large_file()
@@ -243,9 +280,29 @@ jobs:
            	closedir(dirp);
            	return 0;
            }
+          --- a/wscript
+          +++ b/wscript
+          @@ -1,5 +1,6 @@
+           #!/usr/bin/env python
+           
+          +import os
+           from waflib import Options
+           
+           def configure(conf):
+          @@ -10,6 +11,7 @@ def configure(conf):
+               conf.env.CFLAGS = ['-g', '-Wall', '-Werror']
+               conf.env.LDFLAGS = []
+           
+          +    conf.env['SKIP_FAULT_HANDLING'] = True
+               conf.check_large_file()
+               conf.check_inline()
+               conf.check_function('strerror_r', 'string.h')
           EOF
           cd talloc-2.4.2
           patch -p1 < ../talloc-android.patch >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to apply talloc patch" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
           cat ../talloc-android.patch >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Configure and build talloc for Android arm64-v8a (WAF)
@@ -262,7 +319,7 @@ jobs:
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
           ./configure --host=aarch64-linux-android --prefix=$PWD/install \
-            --disable-python --without-gettext --disable-rpath \
+            --disable-python --without-gettext --disable-rpath --disable-fault-handling \
             --cross-compile \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
             > configure.log 2>&1
@@ -271,15 +328,20 @@ jobs:
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
           make install > make_install.log 2>&1
           cat make_install.log >> $GITHUB_WORKSPACE/full_build.log
+          if [ $? -ne 0 ]; then
+            echo "Error: talloc build failed" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Display talloc errors on failure
-        if: failure()
+        if: always()
         run: |
           echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           for log in talloc-2.4.2/{configure.log,make.log,make_install.log,bin/config.log}; do
             if [ -f "$log" ]; then
-              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-              grep -i -E "error:|configure: error" "$log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
+              grep -i -E "error:|configure: error|KeyError|waflib.Errors" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            else
+              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
             fi
           done
 
@@ -288,11 +350,17 @@ jobs:
           echo "=== Verify talloc install ===" >> $GITHUB_WORKSPACE/full_build.log
           ls -l talloc-2.4.2/install/lib >> $GITHUB_WORKSPACE/full_build.log 2>&1
           ls -l talloc-2.4.2/install/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: talloc installation verification failed" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Package talloc artifacts
         run: |
           echo "=== Package talloc artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
           tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to package talloc artifacts" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Upload talloc logs
         if: always()
@@ -306,6 +374,7 @@ jobs:
             talloc-2.4.2/make_install.log
 
       - name: Upload talloc artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: talloc_android_arm64
@@ -317,6 +386,9 @@ jobs:
         run: |
           echo "=== Clone proot ===" >> $GITHUB_WORKSPACE/full_build.log
           git clone --depth=1 https://github.com/Ananbox/proot.git proot >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to clone proot" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Build proot for Android arm64-v8a (with talloc)
         if: success()
@@ -337,15 +409,20 @@ jobs:
           make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > make.log 2>&1
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
           cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: proot build failed" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Display proot errors on failure
-        if: failure()
+        if: always()
         run: |
           echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           for log in proot/src/{make_clean.log,make.log}; do
             if [ -f "$log" ]; then
-              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
+              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            else
+              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
             fi
           done
 
@@ -354,6 +431,9 @@ jobs:
         run: |
           echo "=== Package proot artifacts ===" >> $GITHUB_WORKSPACE/full_build.log
           tar -czvf proot_android_arm64.tar.gz libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to package proot artifacts" >> $GITHUB_WORKSPACE/error_summary.log
+          fi
 
       - name: Upload proot logs
         if: always()
