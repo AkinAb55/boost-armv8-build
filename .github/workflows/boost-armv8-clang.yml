@@ -218,7 +218,6 @@ jobs:
           fi
 
       - name: Display Boost errors
-        if: always()
         working-directory: ./boost_1_83_0
         run: |
           echo "=== Boost Build Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
@@ -227,29 +226,6 @@ jobs:
           else
             echo "Error: boost_build.log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
           fi
-
-      - name: Package Boost artifacts
-        run: |
-          echo "=== Package Boost artifacts ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          tar -czvf boost_android_arm64.tar.gz -C boost_android_arm64_install . >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to package Boost artifacts" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-
-      - name: Upload Boost build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: boost-build-log
-          path: boost_1_83_0/boost_build.log
-
-      - name: Upload Boost artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: boost_android_arm64
-          path: boost_android_arm64.tar.gz
 
       # --- TALLOC ---
       - name: Download and extract talloc
@@ -276,9 +252,9 @@ jobs:
            from waflib import Options
            
            def configure(conf):
-          @@ -23,6 +24,22 @@ def configure(conf):
-               conf.define('HAVE_STRNDUP', 1)
-               conf.define('HAVE_STRNLEN', 1)
+          @@ -20,6 +21,22 @@ def configure(conf):
+               conf.check_function('strndup', 'string.h')
+               conf.check_function('strnlen', 'string.h')
            
           +    # Skip tests that fail on Android Bionic
           +    conf.env['SKIP_TELLDIR'] = True
@@ -301,25 +277,25 @@ jobs:
            
           --- a/lib/replace/tests/os2_delete.c
           +++ b/lib/replace/tests/os2_delete.c
-          @@ -69,7 +69,9 @@ static int test_readdir_os2_delete(void)
-           		closedir(dirp);
-           		return -1;
-           	}
+          @@ -65,7 +65,9 @@ static int test_readdir_os2_delete(void)
+          		closedir(dirp);
+          		return -1;
+          	}
           +#ifndef SKIP_TELLDIR
-           	off = telldir(dirp);
+          	off = telldir(dirp);
           +#endif
-           	while ((dp = readdir(dirp)) != NULL) {
-           		char *fname;
-           		if (strncmp(dp->d_name, "test", 4) != 0) {
-          @@ -86,7 +88,9 @@ static int test_readdir_os2_delete(void)
-           			continue;
-           		}
-           	}
+          	while ((dp = readdir(dirp)) != NULL) {
+          		char *fname;
+          		if (strncmp(dp->d_name, "test", 4) != 0) {
+          @@ -82,7 +84,9 @@ static int test_readdir_os2_delete(void)
+          			continue;
+          		}
+          	}
           +#ifndef SKIP_TELLDIR
-           	seekdir(dirp, off);
+          	seekdir(dirp, off);
           +#endif
-           	closedir(dirp);
-           	return 0;
+          	closedir(dirp);
+          	return 0;
            }
           --- a/wscript
           +++ b/wscript
@@ -385,7 +361,6 @@ jobs:
           fi
 
       - name: Display talloc errors
-        if: always()
         run: |
           echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
           for log in talloc-2.4.2/{configure.log,make.log,make_install.log,bin/config.log}; do
@@ -396,23 +371,6 @@ jobs:
               echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
             fi
           done
-
-      - name: Verify talloc install
-        run: |
-          echo "=== Verify talloc install ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          ls -l talloc-2.4.2/install/lib >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          ls -l talloc-2.4.2/install/include >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          if [ $? -ne 0 ]; then
-            echo "Error: talloc installation verification failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-
-      - name: Upload talloc artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: talloc_android_arm64
-          path: talloc_android_arm64.tar.gz
 
       # --- PROOT ---
       - name: Clone proot
@@ -443,62 +401,7 @@ jobs:
           cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
           make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
           cat make.log >> $GITHUB_WORKSPACE/full_build.log
-          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
           if [ $? -ne 0 ]; then
             echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
             exit 1
           fi
-
-      - name: Display proot errors
-        if: always()
-        run: |
-          echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          for log in proot/src/{make_clean.log,make.log}; do
-            if [ -f "$log" ]; then
-              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
-              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            else
-              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            fi
-          done
-
-      - name: Package proot artifacts
-        if: success()
-        run: |
-          echo "=== Package proot artifacts ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          tar -czvf proot_android_arm64.tar.gz libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to package proot artifacts" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-
-      - name: Upload proot logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: proot-build-logs
-          path: |
-            proot/src/make_clean.log
-            proot/src/make.log
-
-      - name: Upload proot artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: proot_android_arm64
-          path: proot_android_arm64.tar.gz
-
-      # --- Логи ---
-      - name: Upload error summary log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-summary-log
-          path: $GITHUB_WORKSPACE/error_summary.log
-
-      - name: Upload full build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: full-build-log
-          path: $GITHUB_WORKSPACE/full_build.log
