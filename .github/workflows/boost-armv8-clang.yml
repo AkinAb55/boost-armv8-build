@@ -292,6 +292,7 @@ jobs:
             exit 1
           fi
           cat skip-replace-tests.patch >> $GITHUB_WORKSPACE/full_build.log
+      
       - name: Configure and build talloc static
         run: |
           echo "=== Configure and build talloc static ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
