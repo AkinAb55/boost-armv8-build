@@ -4,7 +4,8 @@ name: Build Boost, talloc, proot for Android ARM64 (bionic, ananbox compatible)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build-all:
@@ -16,31 +17,12 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Log checkout
-        run: |
-          echo "=== Checkout repository ==="
-          git checkout main
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to checkout repository"
-            exit 1
-          fi
-          git status
-          pwd
-          echo "Listing .github/workflows/:"
-          ls -l .github/workflows/ || echo "Warning: .github/workflows/ not found"
-
       - name: Install dependencies (host tools)
         run: |
-          echo "=== Install dependencies ==="
+          set -e
           sudo apt-get update
           sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip \
             git python3 curl autoconf automake libtool pkg-config patch
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to install dependencies"
-            exit 1
-          fi
-          which patch
-          dpkg -l | grep patch
 
       - name: Cache Android NDK
         id: cache-ndk
@@ -52,109 +34,58 @@ jobs:
       - name: Download and extract Android NDK (r26c)
         if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
-          echo "=== Download and extract Android NDK ==="
-          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip \
-            -O ndk.zip
+          set -e
+          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
           unzip -q ndk.zip
           mv android-ndk-r26c $HOME/android-ndk
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract NDK"
-            exit 1
-          fi
-          ls -l $HOME/android-ndk
-
-      - name: Verify Android NDK integrity
-        run: |
-          echo "=== Verify Android NDK integrity ==="
-          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" ]; then
-            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found"
-            exit 1
-          fi
-          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ar not found"
-            exit 1
-          fi
-          if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found"
-            exit 1
-          fi
-          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
 
       - name: Set up Android NDK environment
         run: |
-          echo "=== Set up Android NDK environment ==="
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" \
-            >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$HOME/android-ndk"
-          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-          echo $PATH
+          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
       # --- BOOST ---
       - name: Prepare Boost download script
         run: |
-          echo "=== Prepare Boost download script ==="
+          set -e
           cat <<'EOF' > download_boost.sh
           #!/bin/bash
           BOOST_URL="$1"
           BOOST_ARCHIVE="$2"
           MAX_ATTEMPTS=5
           for attempt in $(seq 1 $MAX_ATTEMPTS); do
-              echo "Attempt $attempt of $MAX_ATTEMPTS"
-              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
-              if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
-                  echo "Download successful."
-                  exit 0
-              else
-                  echo "Download failed, retrying..."
-                  sleep 3
-              fi
+            curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
+            if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
+              exit 0
+            else
+              sleep 3
+            fi
           done
           echo "Error: Failed to download Boost after $MAX_ATTEMPTS attempts"
           exit 1
           EOF
           chmod +x download_boost.sh
-          cat download_boost.sh
 
       - name: Download Boost source
         run: |
-          echo "=== Download Boost source ==="
-          ./download_boost.sh \
-            "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" \
-            "boost-1.83.0.tar.xz"
+          set -e
+          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
           tar -xf boost-1.83.0.tar.xz
           mv boost-1.83.0 boost_1_83_0
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract Boost"
-            exit 1
-          fi
-          ls -l boost_1_83_0
 
       - name: Prepare user-config.jam for Boost
         run: |
-          echo "=== Prepare user-config.jam for Boost ==="
+          set -e
           ANDROID_API=21
           NDK_HOME="$HOME/android-ndk"
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          echo "using clang : android : $TOOLCHAIN/clang++ \
-            --target=aarch64-linux-android$ANDROID_API \
-            --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" \
-            > $HOME/user-config.jam
-          cat $HOME/user-config.jam
-          if [ ! -f $HOME/user-config.jam ]; then
-            echo "Error: Failed to create user-config.jam"
-            exit 1
-          fi
+          echo "using clang : android : $TOOLCHAIN/clang++ --target=aarch64-linux-android$ANDROID_API --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" > $HOME/user-config.jam
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
-          echo "=== Bootstrap Boost.Build ==="
+          set -e
           ./bootstrap.sh --with-toolset=clang
-          if [ $? -ne 0 ]; then
-            echo "Error: Boost bootstrap failed"
-            exit 1
-          fi
 
       - name: Build Boost for Android arm64-v8a
         working-directory: ./boost_1_83_0
@@ -162,14 +93,12 @@ jobs:
           ANDROID_API: 21
           NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
-          echo "=== Build Boost for Android arm64-v8a ==="
+          set -e
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           ./b2 toolset=clang-android \
-            cxxflags="--target=aarch64-linux-android$ANDROID_API \
-              --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
-            linkflags="--target=aarch64-linux-android$ANDROID_API \
-              --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
+            cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
+            linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
             target-os=android \
             address-model=64 \
             architecture=arm \
@@ -184,100 +113,42 @@ jobs:
             --build-dir=../boost_android_arm64_build \
             --layout=system \
             --user-config=$HOME/user-config.jam \
-            --with-date_time --with-filesystem --with-log \
-            --with-program_options --with-regex --with-serialization \
-            --with-system --with-thread \
+            --with-date_time \
+            --with-filesystem \
+            --with-log \
+            --with-program_options \
+            --with-regex \
+            --with-serialization \
+            --with-system \
+            --with-thread \
             -d+2 install -j$(nproc)
-          if [ $? -ne 0 ]; then
-            echo "Error: Boost build failed"
-            exit 1
-          fi
+
+      - name: Package Boost artifacts
+        run: |
+          set -e
+          tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
       # --- TALLOC ---
       - name: Download and extract talloc
         run: |
-          echo "=== Download and extract talloc ==="
-          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz \
-            -O talloc-2.4.2.tar.gz
+          set -e
+          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract talloc"
-            exit 1
-          fi
-          ls -lah talloc-2.4.2
 
-      - name: Patch talloc to skip replace tests
+      - name: Patch talloc to disable tests for cross-compile
         run: |
-          echo "=== Patch talloc to skip replace tests ==="
+          set -e
           cd talloc-2.4.2
+          # Отключаем любые build_tests и тестовые секции waf, чтобы не строить и не запускать тесты
+          sed -i '/def build_tests(ctx):/,/^$/d' wscript
+          sed -i '/ctx.recurse.*tests.*/d' wscript
+          sed -i '/bld.SAMBA_SUBSYSTEM.*tests.*/d' wscript
+          # Можно убедиться, что тесты не упоминаются
+          grep -i 'test' wscript || true
 
-          # Diagnostic: Show original wscript content
-          echo "Original lib/replace/wscript:"
-          cat lib/replace/wscript
-
-          # Modify lib/replace/wscript dynamically
-          echo "Modifying lib/replace/wscript to skip replace tests"
-          # Backup original wscript
-          cp lib/replace/wscript lib/replace/wscript.bak
-          if [ ! -f lib/replace/wscript.bak ]; then
-              echo "Error: Failed to create wscript.bak"
-              exit 1
-          fi
-          # Add 'import os' after shebang, avoid duplicates
-          if ! grep -q "import os" lib/replace/wscript; then
-              sed -i '1a import os' lib/replace/wscript
-          else
-              echo "import os already present, skipping"
-          fi
-          # Find the line number of 'def configure(conf):' and 'conf.check_python_version((3,5,0))'
-          CONFIGURE_LINE=$(grep -n 'def configure(conf):' lib/replace/wscript | cut -d: -f1)
-          PYTHON_VERSION_LINE=$(grep -n 'conf.check_python_version((3,5,0))' lib/replace/wscript | cut -d: -f1)
-          if [ -n "$CONFIGURE_LINE" ] && [ -n "$PYTHON_VERSION_LINE" ] && [ "$PYTHON_VERSION_LINE" -gt "$CONFIGURE_LINE" ]; then
-              # Insert skip tests code after conf.check_python_version((3,5,0))
-              sed -i "${PYTHON_VERSION_LINE}a\\
-                  # Skip replace tests for Android\\
-                  conf.env['SKIP_REPLACE_TESTS'] = True\\
-                  if conf.env['SKIP_REPLACE_TESTS']:\\
-                      conf.env['replace_test_sources'] = []\\
-                      return" lib/replace/wscript
-          else
-              # Fallback: Append at the end of configure function
-              echo "Warning: Could not find conf.check_python_version((3,5,0)), appending to configure function"
-              CLOSING_BRACE_LINE=$(awk '/def configure\(conf\):/{p=1} p&&/\}/{p=0; print NR}' lib/replace/wscript | head -1)
-              if [ -n "$CLOSING_BRACE_LINE" ]; then
-                  sed -i "${CLOSING_BRACE_LINE}i\\
-                      # Skip replace tests for Android\\
-                      conf.env['SKIP_REPLACE_TESTS'] = True\\
-                      if conf.env['SKIP_REPLACE_TESTS']:\\
-                          conf.env['replace_test_sources'] = []\\
-                          return" lib/replace/wscript
-              else
-                  echo "Error: Could not find configure function in wscript"
-                  exit 1
-              fi
-          fi
-
-          # Verify wscript modifications
-          echo "Modified lib/replace/wscript:"
-          cat lib/replace/wscript
-          echo "Differences between wscript.bak and wscript:"
-          diff -u lib/replace/wscript.bak lib/replace/wscript || echo "No differences detected (check manually)"
-          grep "SKIP_REPLACE_TESTS" lib/replace/wscript \
-            || { echo "Error: SKIP_REPLACE_TESTS not added to wscript"; exit 1; }
-          grep "import os" lib/replace/wscript \
-            || { echo "Error: import os not added to wscript"; exit 1; }
-          grep "replace_test_sources" lib/replace/wscript \
-            || { echo "Warning: replace_test_sources not found in wscript"; }
-
-          # Diagnostic: Confirm tests are skipped
-          echo "Checking if replace tests are skipped:"
-          grep "replace_test_sources = \[\]" lib/replace/wscript \
-            && echo "Success: replace_test_sources set to empty list, tests skipped" \
-            || echo "Warning: replace_test_sources not set to empty, tests may still run"
-
-      - name: Configure and build talloc static
+      - name: Configure and build talloc static (waf), capture log
         run: |
-          echo "=== Configure and build talloc static ==="
+          set -e
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -285,106 +156,50 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API \
-            --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API \
-            --sysroot=$SYSROOT -fPIC"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          cat <<EOF >cross-answers.txt
-          Checking uname sysname type: "Linux"
-          Checking uname machine type: "dontcare"
-          Checking uname release type: "dontcare"
-          Checking uname version type: "dontcare"
-          Checking simple C program: OK
-          rpath library support: OK
-          -Wl,--version-script support: FAIL
-          Checking getconf LFS_CFLAGS: OK
-          Checking for large file support without additional flags: OK
-          Checking for -D_FILE_OFFSET_BITS=64: OK
-          Checking for -D_LARGE_FILES: OK
-          Checking correct behavior of strtoll: OK
-          Checking for working strptime: OK
-          Checking for C99 vsnprintf: OK
-          Checking for HAVE_SHARED_MMAP: OK
-          Checking for HAVE_MREMAP: OK
-          Checking for HAVE_INCOHERENT_MMAP: OK
-          Checking for HAVE_SECURE_MKSTEMP: OK
-          Checking getconf large file support flags work: OK
-          Checking for HAVE_IFACE_IFCONF: FAIL
-          Checking for HAVE_TELLDIR: FAIL
-          Checking for HAVE_SEEKDIR: FAIL
-          Checking for HAVE_SYS_NDIR_H: FAIL
-          Checking for HAVE_SYS_DIR_H: FAIL
-          Checking for HAVE_NDIR_H: FAIL
-          Checking for HAVE_DIR_H: FAIL
-          EOF
-          ./configure build --prefix=$PWD/install --disable-rpath \
-            --disable-python --cross-compile --cross-answers=cross-answers.txt \
-            CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-          if [ $? -ne 0 ]; then
-            echo "Error: talloc configure failed"
-            exit 1
-          fi
-          make V=1 -j$(nproc) talloc.o
-          if [ $? -ne 0 ]; then
-            echo "Error: talloc build failed"
-            exit 1
-          fi
-          mkdir -p install/include install/lib
-          "$AR" rcs install/lib/libtalloc.a bin/default/talloc*.o
-          cp -f talloc.h install/include
-          ls -l install/lib install/include
+          {
+            python3 ./waf configure \
+              --disable-python \
+              --without-gettext \
+              --prefix=$PWD/install \
+              CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+            python3 ./waf build -v
+            python3 ./waf install
+          } 2>&1 | tee ../talloc_build.log
+
+      - name: Package talloc artifacts
+        run: |
+          set -e
+          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
 
       # --- PROOT ---
       - name: Clone proot
-        if: success()
         run: |
-          echo "=== Clone proot ==="
+          set -e
           git clone --depth=1 https://github.com/Ananbox/proot.git proot
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to clone proot"
-            exit 1
-          fi
-          ls -l proot/src
 
-      - name: Patch proot for Android
+      - name: Patch proot for Android bionic basename
         run: |
-          echo "=== Patch proot for Android ==="
+          set -e
           cd proot
-          cat > android-basename.patch <<- 'EOF'
-          --- a/src/cli/cli.c
-          +++ b/src/cli/cli.c
-          @@ -25,6 +25,24 @@
-           #include <string.h>
-           #include <ctype.h>
-           #include <errno.h>
-          +#ifdef __ANDROID__
-          +#include <string.h>
-          +static char *basename(const char *path) {
-          +    char *last_slash = strrchr(path, '/');
-          +    if (last_slash == NULL)
-          +        return (char *)path;
-          +    return last_slash + 1;
-          +}
-          +#else
-          +#include <libgen.h>
-          +#endif
-           #include <sys/stat.h>
-           #include <sys/types.h>
-           #include <unistd.h>
-          EOF
-          patch -p1 < android-basename.patch
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply proot patch"
-            exit 1
-          fi
-          grep "basename" src/cli/cli.c \
-            || echo "Warning: basename patch not applied correctly"
+          sed -i '1i\
+          #ifdef __ANDROID__\n\
+          #include <string.h>\n\
+          static char *basename(const char *path) {\n\
+            char *last_slash = strrchr(path, \'/\');\n\
+            if (last_slash == NULL)\n\
+                return (char *)path;\n\
+            return last_slash + 1;\n\
+          }\n\
+          #else\n\
+          #include <libgen.h>\n\
+          #endif\n' src/cli/cli.c
 
       - name: Build proot for Android arm64-v8a
-        if: success()
         run: |
-          echo "=== Build proot for Android arm64-v8a ==="
+          set -e
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -392,28 +207,40 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API \
-            --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include \
-            -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API \
-            --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
-          export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
-          export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/../talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/../talloc-2.4.2/install/lib -ltalloc"
           cd proot/src
           make clean
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo \
-            CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
           cp -v proot $GITHUB_WORKSPACE/libproot.so
-          if [ $? -ne 0 ]; then
-            echo "Error: proot build failed"
-            exit 1
-          fi
-          make clean
-          CFLAGS="$CFLAGS -DUSERLAND" \
-            make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo \
-            CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
-          cp -v proot $GITHUB_WORKSPACE/proot-userland
-          if [ $? -ne 0 ]; then
-            echo "Error: proot-userland build failed"
-            exit 1
-          fi
+
+      - name: Package proot artifacts
+        run: |
+          set -e
+          tar -czvf proot_android_arm64.tar.gz libproot.so
+
+      # --- FINAL ARTIFACTS ---
+      - name: Upload Boost artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boost_android_arm64
+          path: boost_android_arm64.tar.gz
+
+      - name: Upload talloc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: talloc_android_arm64
+          path: talloc_android_arm64.tar.gz
+
+      - name: Upload proot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: proot_android_arm64
+          path: proot_android_arm64.tar.gz
+
+      - name: Upload talloc build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talloc_build_log
+          path: talloc_build.log
