@@ -213,13 +213,15 @@ jobs:
           cat > skip-replace-tests.patch <<- 'EOF'
           --- a/lib/replace/wscript
           +++ b/lib/replace/wscript
-          @@ -1,5 +1,6 @@
-           #!/usr/bin/env python
+          @@ -2,6 +2,7 @@
            
-          +import os
+           import os
            from waflib import Options
-           
-          @@ -10,6 +11,13 @@ def configure(conf):
+          +
+           def configure(conf):
+               conf.check_tool('compiler_cc')
+               conf.check_tool('python')
+          @@ -9,6 +10,12 @@ def configure(conf):
                conf.check_python_version((3,5,0))
                conf.check_python_headers()
            
@@ -227,7 +229,6 @@ jobs:
           +    conf.env['SKIP_REPLACE_TESTS'] = True
           +    if conf.env['SKIP_REPLACE_TESTS']:
           +        conf.env['replace_test_sources'] = []
-          +        conf.msg('Skipping replace tests', 'Disabled for Android', color='YELLOW')
           +        return
           +
                conf.check_function('strndup', 'string.h')
@@ -382,7 +383,7 @@ jobs:
           export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
-          export RANLIB="$TOOLCHAIN/llvm-ar"
+          export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API \
             --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include \
             -DANDROID -Wno-deprecated-declarations"
