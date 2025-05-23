@@ -10,27 +10,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Validate YAML syntax
-        run: |
-          echo "=== Validate YAML syntax ==="
-          set -e
-          shopt -s nullglob
-          echo "Current directory: $(pwd)"
-          echo "Checking for .github/workflows/ directory:"
-          ls -l .github/workflows/ || echo "Warning: .github/workflows/ directory not found"
-          files=(.github/workflows/*.yml)
-          if [ ${#files[@]} -gt 0 ]; then
-            sudo apt-get update && sudo apt-get install -y yamllint
-            yamllint -f parsable "${files[@]}"
-            if [ $? -ne 0 ]; then
-              echo "Error: YAML syntax validation failed"
-              exit 1
-            fi
-          else
-            echo "Error: No .yml files found in .github/workflows/"
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -46,6 +25,25 @@ jobs:
           fi
           git status
           pwd
+          echo "Listing .github/workflows/:"
+          ls -l .github/workflows/ || echo "Warning: .github/workflows/ not found"
+
+      - name: Validate YAML syntax
+        run: |
+          echo "=== Validate YAML syntax ==="
+          set -e
+          shopt -s nullglob
+          files=(.github/workflows/*.yml)
+          if [ ${#files[@]} -gt 0 ]; then
+            sudo apt-get update && sudo apt-get install -y yamllint
+            yamllint -f parsable "${files[@]}"
+            if [ $? -ne 0 ]; then
+              echo "Error: YAML syntax validation failed"
+              exit 1
+            fi
+          else
+            echo "Warning: No .yml files found in .github/workflows/, skipping validation"
+          fi
 
       - name: Install dependencies (host tools)
         run: |
