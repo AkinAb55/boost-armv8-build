@@ -139,9 +139,10 @@ jobs:
         run: |
           set -e
           cd talloc-2.4.2
-          # Отключаем все тесты, чтобы не было ошибок при кросс-компиляции
-          sed -i '/SUBDIRS/s/tests//' Makefile.in || true
-          sed -i '/tests\/Makefile/d' Makefile.in || true
+          # Отключаем любые тесты в Makefile.am если есть
+          [ -f Makefile.am ] && sed -i '/SUBDIRS/s/tests//' Makefile.am || true
+          # На всякий случай для waf/wscript тоже удалим тесты
+          [ -f wscript ] && sed -i '/def build_tests(ctx):/,/^$/d' wscript || true
 
       - name: Configure and build talloc static (autotools, cross-answers), capture log
         run: |
