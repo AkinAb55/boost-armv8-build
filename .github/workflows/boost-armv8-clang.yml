@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Install dependencies (host tools)
         run: |
@@ -45,31 +43,10 @@ jobs:
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
       # --- BOOST ---
-      - name: Prepare Boost download script
-        run: |
-          set -e
-          cat <<'EOF' > download_boost.sh
-          #!/bin/bash
-          BOOST_URL="$1"
-          BOOST_ARCHIVE="$2"
-          MAX_ATTEMPTS=5
-          for attempt in $(seq 1 $MAX_ATTEMPTS); do
-            curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
-            if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
-              exit 0
-            else
-              sleep 3
-            fi
-          done
-          echo "Error: Failed to download Boost after $MAX_ATTEMPTS attempts"
-          exit 1
-          EOF
-          chmod +x download_boost.sh
-
       - name: Download Boost source
         run: |
           set -e
-          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
+          wget -O boost-1.83.0.tar.xz https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz
           tar -xf boost-1.83.0.tar.xz
           mv boost-1.83.0 boost_1_83_0
 
@@ -128,42 +105,50 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC (WAF, skip tests for Android) ---
+      # --- TALLOC (WAF, skip tests for Android, show build log in terminal) ---
       - name: Download and extract talloc
         run: |
           set -e
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Patch talloc wscript to skip tests for Android cross-compile
+      - name: Find and prepare waf for talloc
         run: |
           set -e
           cd talloc-2.4.2
-          # Remove all test builds: this disables building and compiling tests, which fail for Android cross-builds.
+          # Автоматически ищем waf или waf-light и делаем waf исполняемым
+          if [ -f waf ]; then
+            chmod +x waf
+          elif [ -f waf-light ]; then
+            cp waf-light waf
+            chmod +x waf
+          else
+            found=$(find . -type f \( -name "waf" -o -name "waf-light" \) | head -n1)
+            if [ -n "$found" ]; then
+              cp "$found" waf
+              chmod +x waf
+            else
+              echo "Не найден waf или waf-light в исходниках talloc!"
+              exit 1
+            fi
+          fi
+
+      - name: Remove talloc test sources and patch wscript to skip tests
+        run: |
+          set -e
+          cd talloc-2.4.2
+          # Удаляем все тестовые директории и файлы по маске
+          find . -type f -name "test*.c" -delete || true
+          find . -type d -name "test*" -exec rm -rf {} + || true
+          # Удаляем все упоминания тестов из wscript
           sed -i '/def build_tests(ctx):/,/^$/d' wscript
           sed -i '/ctx.recurse.*tests.*/d' wscript
           sed -i '/bld.SAMBA_SUBSYSTEM.*tests.*/d' wscript
           sed -i '/tests\/Makefile/d' wscript
           sed -i '/tests = /d' wscript
-          # Remove any test source files if present (not critical, but clean)
-          find . -name "test*.c" -delete || true
+          sed -i '/replace-test/d' wscript
 
-      - name: Prepare waf for talloc
-        run: |
-          set -e
-          cd talloc-2.4.2
-          # Use the waf-light that comes with samba/talloc
-          if [ ! -f waf ]; then
-            if [ -f waf-light ]; then
-              cp waf-light waf
-              chmod +x waf
-            else
-              echo "Neither waf nor waf-light found in talloc source!"
-              exit 1
-            fi
-          fi
-
-      - name: Configure and build talloc static (waf), capture log and stream
+      - name: Configure and build talloc static (waf), stream output and save log
         run: |
           set -e
           export ANDROID_API=21
@@ -176,7 +161,7 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          # Show configure & build output in terminal, also log to file
+          # Всё выводим в терминал и сохраняем в лог
           {
             echo "=== waf configure ==="
             python3 ./waf configure \
