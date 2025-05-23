@@ -211,32 +211,42 @@ jobs:
           echo "=== Patch talloc to skip replace tests ==="
           cd talloc-2.4.2
 
+          # Diagnostic: Show original wscript content
+          echo "Original lib/replace/wscript:"
+          cat lib/replace/wscript
+
           # Modify lib/replace/wscript dynamically
           echo "Modifying lib/replace/wscript to skip replace tests"
           # Backup original wscript
           cp lib/replace/wscript lib/replace/wscript.bak
-          # Add 'import os' after shebang
-          sed -i '1a import os' lib/replace/wscript
-          # Find the line number of 'def configure(conf):' and 'conf.check_python_headers()'
+          # Add 'import os' after shebang, avoid duplicates
+          if ! grep -q "import os" lib/replace/wscript; then
+              sed -i '1a import os' lib/replace/wscript
+          else
+              echo "import os already present, skipping"
+          fi
+          # Find the line number of 'def configure(conf):' and 'conf.check_python_version((3,5,0))'
           CONFIGURE_LINE=$(grep -n 'def configure(conf):' lib/replace/wscript | cut -d: -f1)
-          HEADERS_LINE=$(grep -n 'conf.check_python_headers()' lib/replace/wscript | cut -d: -f1)
-          if [ -n "$CONFIGURE_LINE" ] && [ -n "$HEADERS_LINE" ] && [ "$HEADERS_LINE" -gt "$CONFIGURE_LINE" ]; then
-              # Insert skip tests code before conf.check_python_headers()
-              sed -i "${HEADERS_LINE}i\\
+          PYTHON_VERSION_LINE=$(grep -n 'conf.check_python_version((3,5,0))' lib/replace/wscript | cut -d: -f1)
+          if [ -n "$CONFIGURE_LINE" ] && [ -n "$PYTHON_VERSION_LINE" ] && [ "$PYTHON_VERSION_LINE" -gt "$CONFIGURE_LINE" ]; then
+              # Insert skip tests code after conf.check_python_version((3,5,0))
+              sed -i "${PYTHON_VERSION_LINE}a\\
                   # Skip replace tests for Android\\
                   conf.env['SKIP_REPLACE_TESTS'] = True\\
-                  conf.env['replace_test_sources'] = []\\
-                  return" lib/replace/wscript
+                  if conf.env['SKIP_REPLACE_TESTS']:\\
+                      conf.env['replace_test_sources'] = []\\
+                      return" lib/replace/wscript
           else
               # Fallback: Append at the end of configure function
-              echo "Warning: Could not find conf.check_python_headers(), appending to configure function"
+              echo "Warning: Could not find conf.check_python_version((3,5,0)), appending to configure function"
               CLOSING_BRACE_LINE=$(awk '/def configure\(conf\):/{p=1} p&&/\}/{p=0; print NR}' lib/replace/wscript | head -1)
               if [ -n "$CLOSING_BRACE_LINE" ]; then
                   sed -i "${CLOSING_BRACE_LINE}i\\
                       # Skip replace tests for Android\\
                       conf.env['SKIP_REPLACE_TESTS'] = True\\
-                      conf.env['replace_test_sources'] = []\\
-                      return" lib/replace/wscript
+                      if conf.env['SKIP_REPLACE_TESTS']:\\
+                          conf.env['replace_test_sources'] = []\\
+                          return" lib/replace/wscript
               else
                   echo "Error: Could not find configure function in wscript"
                   exit 1
@@ -244,10 +254,17 @@ jobs:
           fi
 
           # Verify wscript modifications
+          echo "Modified lib/replace/wscript:"
+          cat lib/replace/wscript
+          diff lib/replace/wscript.bak lib/replace/wscript || echo "No differences or backup not found"
           grep "SKIP_REPLACE_TESTS" lib/replace/wscript \
             || { echo "Error: SKIP_REPLACE_TESTS not added to wscript"; exit 1; }
           grep "import os" lib/replace/wscript \
             || { echo "Error: import os not added to wscript"; exit 1; }
+
+          # Diagnostic: Show original os2_delete.c content
+          echo "Original lib/replace/tests/os2_delete.c:"
+          head -n 100 lib/replace/tests/os2_delete.c
 
           # Apply patch for os2_delete.c
           cat > skip-replace-tests-os2.patch <<- 'EOF'
@@ -273,10 +290,14 @@ jobs:
               closedir(dirp);
               return 0;
           }
+
           EOF
           patch -p1 < skip-replace-tests-os2.patch
           if [ $? -ne 0 ]; then
             echo "Error: Failed to apply os2_delete.c patch"
+            cat skip-replace-tests-os2.patch
+            echo "Current os2_delete.c content:"
+            cat lib/replace/tests/os2_delete.c
             exit 1
           fi
           grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c \
