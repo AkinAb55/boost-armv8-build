@@ -12,25 +12,13 @@ jobs:
     steps:
       - name: Validate YAML syntax
         run: |
-          echo "=== Validate YAML syntax ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Validate YAML syntax ==="
           sudo apt-get update && sudo apt-get install -y yamllint
-          yamllint -f parsable .github/workflows/*.yml | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          yamllint -f parsable .github/workflows/*.yml
           if [ $? -ne 0 ]; then
-            echo "Error: YAML syntax validation failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: YAML syntax validation failed"
             exit 1
           fi
-
-      - name: Initialize log files
-        run: |
-          echo "=== Initialize log files ===" | tee -a $GITHUB_WORKSPACE/full_build.log
-          mkdir -p $GITHUB_WORKSPACE
-          touch $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          if [ ! -f $GITHUB_WORKSPACE/full_build.log ] || [ ! -f $GITHUB_WORKSPACE/error_summary.log ]; then
-            echo "Error: Failed to create log files" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            exit 1
-          fi
-          echo "Log files created successfully" >> $GITHUB_WORKSPACE/full_build.log
-          ls -l $GITHUB_WORKSPACE >> $GITHUB_WORKSPACE/full_build.log
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,26 +27,26 @@ jobs:
 
       - name: Log checkout
         run: |
-          echo "=== Checkout repository ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          git checkout main 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Checkout repository ==="
+          git checkout main
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to checkout repository" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to checkout repository"
             exit 1
           fi
-          git status >> $GITHUB_WORKSPACE/full_build.log
-          pwd >> $GITHUB_WORKSPACE/full_build.log
+          git status
+          pwd
 
       - name: Install dependencies (host tools)
         run: |
-          echo "=== Install dependencies ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          sudo apt-get update 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
-          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
+          echo "=== Install dependencies ==="
+          sudo apt-get update
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config patch
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to install dependencies" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to install dependencies"
             exit 1
           fi
-          which patch >> $GITHUB_WORKSPACE/full_build.log
-          dpkg -l | grep patch >> $GITHUB_WORKSPACE/full_build.log
+          which patch
+          dpkg -l | grep patch
 
       - name: Cache Android NDK
         id: cache-ndk
@@ -70,100 +58,100 @@ jobs:
       - name: Download and extract Android NDK (r26c)
         if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
-          echo "=== Download and extract Android NDK ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
-          unzip -q ndk.zip >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          mv android-ndk-r26c $HOME/android-ndk >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          echo "=== Download and extract Android NDK ==="
+          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
+          unzip -q ndk.zip
+          mv android-ndk-r26c $HOME/android-ndk
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract NDK" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to download or extract NDK"
             exit 1
           fi
-          ls -l $HOME/android-ndk >> $GITHUB_WORKSPACE/full_build.log
+          ls -l $HOME/android-ndk
 
       - name: Verify Android NDK integrity
         run: |
-          echo "=== Verify Android NDK integrity ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Verify Android NDK integrity ==="
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" ]; then
-            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: NDK toolchain is incomplete, aarch64-linux-android21-clang not found"
             exit 1
           fi
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ar not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: NDK toolchain is incomplete, llvm-ar not found"
             exit 1
           fi
           if [ ! -f "$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib" ]; then
-            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: NDK toolchain is incomplete, llvm-ranlib not found"
             exit 1
           fi
-          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin >> $GITHUB_WORKSPACE/full_build.log
+          ls -l $HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
 
       - name: Set up Android NDK environment
         run: |
-          echo "=== Set up Android NDK environment ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Set up Android NDK environment ==="
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_WORKSPACE/full_build.log
-          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_WORKSPACE/full_build.log
-          echo $PATH >> $GITHUB_WORKSPACE/full_build.log
+          echo "ANDROID_NDK_HOME=$HOME/android-ndk"
+          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+          echo $PATH
 
       # --- BOOST ---
       - name: Prepare Boost download script
         run: |
-          echo "=== Prepare Boost download script ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Prepare Boost download script ==="
           cat <<'EOF' > download_boost.sh
           #!/bin/bash
           BOOST_URL="$1"
           BOOST_ARCHIVE="$2"
           MAX_ATTEMPTS=5
           for attempt in $(seq 1 $MAX_ATTEMPTS); do
-              echo "Attempt $attempt of $MAX_ATTEMPTS" | tee -a $GITHUB_WORKSPACE/full_build.log
-              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL" 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
+              echo "Attempt $attempt of $MAX_ATTEMPTS"
+              curl -L --progress-bar -o "$BOOST_ARCHIVE" "$BOOST_URL"
               if [ $? -eq 0 ] && [ -s "$BOOST_ARCHIVE" ]; then
-                  echo "Download successful." | tee -a $GITHUB_WORKSPACE/full_build.log
+                  echo "Download successful."
                   exit 0
               else
-                  echo "Download failed, retrying..." | tee -a $GITHUB_WORKSPACE/full_build.log
+                  echo "Download failed, retrying..."
                   sleep 3
               fi
           done
-          echo "Error: Failed to download Boost after $MAX_ATTEMPTS attempts" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "Error: Failed to download Boost after $MAX_ATTEMPTS attempts"
           exit 1
           EOF
           chmod +x download_boost.sh
-          cat download_boost.sh >> $GITHUB_WORKSPACE/full_build.log
+          cat download_boost.sh
 
       - name: Download Boost source
         run: |
-          echo "=== Download Boost source ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz" 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
-          tar -xf boost-1.83.0.tar.xz >> $GITHUB_WORKSPACE/full_build.log 2>&1
-          mv boost-1.83.0 boost_1_83_0 >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          echo "=== Download Boost source ==="
+          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
+          tar -xf boost-1.83.0.tar.xz
+          mv boost-1.83.0 boost_1_83_0
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract Boost" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to download or extract Boost"
             exit 1
           fi
-          ls -l boost_1_83_0 >> $GITHUB_WORKSPACE/full_build.log
+          ls -l boost_1_83_0
 
       - name: Prepare user-config.jam for Boost
         run: |
-          echo "=== Prepare user-config.jam for Boost ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Prepare user-config.jam for Boost ==="
           ANDROID_API=21
           NDK_HOME="$HOME/android-ndk"
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           echo "using clang : android : $TOOLCHAIN/clang++ --target=aarch64-linux-android$ANDROID_API --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" > $HOME/user-config.jam
-          cat $HOME/user-config.jam >> $GITHUB_WORKSPACE/full_build.log
+          cat $HOME/user-config.jam
           if [ ! -f $HOME/user-config.jam ]; then
-            echo "Error: Failed to create user-config.jam" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to create user-config.jam"
             exit 1
           fi
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
         run: |
-          echo "=== Bootstrap Boost.Build ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          ./bootstrap.sh --with-toolset=clang 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
+          echo "=== Bootstrap Boost.Build ==="
+          ./bootstrap.sh --with-toolset=clang
           if [ $? -ne 0 ]; then
-            echo "Error: Boost bootstrap failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Boost bootstrap failed"
             exit 1
           fi
 
@@ -173,9 +161,9 @@ jobs:
           ANDROID_API: 21
           NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         run: |
-          echo "=== Build Boost for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Build Boost for Android arm64-v8a ==="
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64=sysroot"
+          SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           ./b2 toolset=clang-android \
             cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
             linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
@@ -201,38 +189,27 @@ jobs:
             --with-serialization \
             --with-system \
             --with-thread \
-            -d+2 install -j$(nproc) > boost_build.log 2>&1
-          cat boost_build.log >> $GITHUB_WORKSPACE/full_build.log
+            -d+2 install -j$(nproc)
           if [ $? -ne 0 ]; then
-            echo "Error: Boost build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Boost build failed"
             exit 1
-          fi
-
-      - name: Display Boost errors
-        working-directory: ./boost_1_83_0
-        run: |
-          echo "=== Boost Build Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          if [ -f boost_build.log ]; then
-            grep -i -E "error:|[Bb]uild failed" boost_build.log | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in boost_build.log" | tee -a $GITHUB_WORKSPACE/error_summary.log
-          else
-            echo "Error: boost_build.log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
           fi
 
       # --- TALLOC ---
       - name: Download and extract talloc
         run: |
-          echo "=== Download and extract talloc ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
-          tar -xf talloc-2.4.2.tar.gz >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          echo "=== Download and extract talloc ==="
+          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
+          tar -xf talloc-2.4.2.tar.gz
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to download or extract talloc" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to download or extract talloc"
             exit 1
           fi
-          ls -lah talloc-2.4.2 >> $GITHUB_WORKSPACE/full_build.log
+          ls -lah talloc-2.4.2
 
       - name: Patch talloc to skip replace tests
         run: |
-          echo "=== Patch talloc to skip replace tests ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Patch talloc to skip replace tests ==="
           cd talloc-2.4.2
           cat > skip-replace-tests.patch <<- 'EOF'
           --- a/lib/replace/wscript
@@ -281,20 +258,17 @@ jobs:
           	return 0;
            }
           EOF
-          # Verify patch file content
-          cat skip-replace-tests.patch >> $GITHUB_WORKSPACE/full_build.log
-          patch -p1 < skip-replace-tests.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          patch -p1 < skip-replace-tests.patch
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply talloc skip-replace-tests patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to apply talloc skip-replace-tests patch"
             exit 1
           fi
-          # Verify patched files
-          grep "SKIP_REPLACE_TESTS" lib/replace/wscript >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: SKIP_REPLACE_TESTS not found in wscript" >> $GITHUB_WORKSPACE/error_summary.log
-          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: SKIP_REPLACE_TESTS not found in os2_delete.c" >> $GITHUB_WORKSPACE/error_summary.log
+          grep "SKIP_REPLACE_TESTS" lib/replace/wscript || echo "Warning: SKIP_REPLACE_TESTS not found in wscript"
+          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c || echo "Warning: SKIP_REPLACE_TESTS not found in os2_delete.c"
 
       - name: Configure and build talloc static
         run: |
-          echo "=== Configure and build talloc static ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Configure and build talloc static ==="
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -305,7 +279,6 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          # Create cross-answers.txt
           cat <<EOF >cross-answers.txt
           Checking uname sysname type: "Linux"
           Checking uname machine type: "dontcare"
@@ -334,54 +307,37 @@ jobs:
           Checking for HAVE_NDIR_H: FAIL
           Checking for HAVE_DIR_H: FAIL
           EOF
-          # Configure and build
           ./configure build --prefix=$PWD/install --disable-rpath --disable-python --cross-compile --cross-answers=cross-answers.txt \
-            CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-            2>&1 | tee -a configure.log $GITHUB_WORKSPACE/error_summary.log
-          cat configure.log >> $GITHUB_WORKSPACE/full_build.log
+            CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
           if [ $? -ne 0 ]; then
-            echo "Error: talloc configure failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: talloc configure failed"
             exit 1
           fi
-          # Build only talloc.o to avoid tests
-          make V=1 -j$(nproc) talloc.o 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
-          cat make.log >> $GITHUB_WORKSPACE/full_build.log
+          make V=1 -j$(nproc) talloc.o
           if [ $? -ne 0 ]; then
-            echo "Error: talloc build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: talloc build failed"
             exit 1
           fi
           mkdir -p install/include install/lib
           "$AR" rcs install/lib/libtalloc.a bin/default/talloc*.o
           cp -f talloc.h install/include
-          ls -l install/lib install/include >> $GITHUB_WORKSPACE/full_build.log
-
-      - name: Display talloc errors
-        run: |
-          echo "=== talloc Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          for log in talloc-2.4.2/{configure.log,make.log}; do
-            if [ -f "$log" ]; then
-              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
-              grep -i -E "error:|configure: error|KeyError|waflib.Errors" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            else
-              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            fi
-          done
+          ls -l install/lib install/include
 
       # --- PROOT ---
       - name: Clone proot
         if: success()
         run: |
-          echo "=== Clone proot ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          git clone --depth=1 https://github.com/Ananbox/proot.git proot 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log
+          echo "=== Clone proot ==="
+          git clone --depth=1 https://github.com/Ananbox/proot.git proot
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to clone proot" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to clone proot"
             exit 1
           fi
-          ls -l proot/src >> $GITHUB_WORKSPACE/full_build.log
+          ls -l proot/src
 
       - name: Patch proot for Android
         run: |
-          echo "=== Patch proot for Android ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Patch proot for Android ==="
           cd proot
           cat > android-basename.patch <<- 'EOF'
           --- a/src/cli/cli.c
@@ -401,24 +357,22 @@ jobs:
           +#else
           +#include <libgen.h>
           +#endif
+           #include <sys/stat.h>
            #include <sys/types.h>
            #include <unistd.h>
           
           EOF
-          # Verify patch file content
-          cat android-basename.patch >> $GITHUB_WORKSPACE/full_build.log
-          patch -p1 < android-basename.patch 2>&1 | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          patch -p1 < android-basename.patch
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply proot patch" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: Failed to apply proot patch"
             exit 1
           fi
-          # Verify patched file
-          grep "basename" src/cli/cli.c >> $GITHUB_WORKSPACE/full_build.log 2>&1 || echo "Warning: basename patch not applied correctly" >> $GITHUB_WORKSPACE/error_summary.log
+          grep "basename" src/cli/cli.c || echo "Warning: basename patch not applied correctly"
 
       - name: Build proot for Android arm64-v8a
         if: success()
         run: |
-          echo "=== Build proot for Android arm64-v8a ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
+          echo "=== Build proot for Android arm64-v8a ==="
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -431,33 +385,17 @@ jobs:
           export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
           export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
-          make clean 2>&1 | tee -a make_clean.log $GITHUB_WORKSPACE/error_summary.log
-          cat make_clean.log >> $GITHUB_WORKSPACE/full_build.log
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make.log $GITHUB_WORKSPACE/error_summary.log
-          cat make.log >> $GITHUB_WORKSPACE/full_build.log
-          cp -v proot $GITHUB_WORKSPACE/libproot.so >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make clean
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
+          cp -v proot $GITHUB_WORKSPACE/libproot.so
           if [ $? -ne 0 ]; then
-            echo "Error: proot build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: proot build failed"
             exit 1
           fi
-          make clean 2>&1 | tee -a make_clean_userland.log $GITHUB_WORKSPACE/error_summary.log
-          cat make_clean_userland.log >> $GITHUB_WORKSPACE/full_build.log
-          CFLAGS="$CFLAGS -DUSERLAND" make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER" 2>&1 | tee -a make_userland.log $GITHUB_WORKSPACE/error_summary.log
-          cat make_userland.log >> $GITHUB_WORKSPACE/full_build.log
-          cp -v proot $GITHUB_WORKSPACE/proot-userland >> $GITHUB_WORKSPACE/full_build.log 2>&1
+          make clean
+          CFLAGS="$CFLAGS -DUSERLAND" make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
+          cp -v proot $GITHUB_WORKSPACE/proot-userland
           if [ $? -ne 0 ]; then
-            echo "Error: proot-userland build failed" | tee -a $GITHUB_WORKSPACE/error_summary.log
+            echo "Error: proot-userland build failed"
             exit 1
           fi
-
-      - name: Display proot errors
-        run: |
-          echo "=== proot Errors ===" | tee -a $GITHUB_WORKSPACE/full_build.log $GITHUB_WORKSPACE/error_summary.log
-          for log in proot/src/{make_clean.log,make.log,make_clean_userland.log,make_userland.log}; do
-            if [ -f "$log" ]; then
-              echo "Errors in $log:" | tee -a $GITHUB_WORKSPACE/error_summary.log
-              grep -i -E "error:|[Bb]uild failed" "$log" | tee -a $GITHUB_WORKSPACE/error_summary.log || echo "No errors found in $log" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            else
-              echo "Error: $log not found" | tee -a $GITHUB_WORKSPACE/error_summary.log
-            fi
-          done
