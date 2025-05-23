@@ -218,7 +218,8 @@ jobs:
           +import os
            
            from waflib import Options
-          @@ -5,6 +6,11 @@ from waflib import Options
+          @@ -4,6 +5,11 @@ from waflib import Options
+           
            def configure(conf):
                conf.check_tool('compiler_cc')
                conf.check_tool('python')
