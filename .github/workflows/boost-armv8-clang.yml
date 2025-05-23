@@ -135,15 +135,22 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
+      - name: Prepare waf for talloc
+        run: |
+          set -e
+          cd talloc-2.4.2
+          if [ ! -f waf ]; then
+            curl -L -o waf https://waf.io/waf-2.0.22
+            chmod +x waf
+          fi
+
       - name: Patch talloc to disable tests for cross-compile
         run: |
           set -e
           cd talloc-2.4.2
-          # Отключаем любые build_tests и тестовые секции waf, чтобы не строить и не запускать тесты
           sed -i '/def build_tests(ctx):/,/^$/d' wscript
           sed -i '/ctx.recurse.*tests.*/d' wscript
           sed -i '/bld.SAMBA_SUBSYSTEM.*tests.*/d' wscript
-          # Можно убедиться, что тесты не упоминаются
           grep -i 'test' wscript || true
 
       - name: Configure and build talloc static (waf), capture log
