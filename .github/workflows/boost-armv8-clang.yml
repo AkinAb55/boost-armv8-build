@@ -112,43 +112,52 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Find and prepare waf for talloc
+      - name: Scan for important files before configure
         run: |
           set -e
           cd talloc-2.4.2
-          # Автоматически ищем waf или waf-light и делаем waf исполняемым
-          if [ -f waf ]; then
-            chmod +x waf
-          elif [ -f waf-light ]; then
-            cp waf-light waf
-            chmod +x waf
+          echo "=== Сканируем директорию до configure ==="
+          find . -type f -print
+
+      - name: Run configure (to bootstrap waf/waflib)
+        run: |
+          set -e
+          cd talloc-2.4.2
+          if [ -f configure ]; then
+            chmod +x configure
+            ./configure
           else
-            found=$(find . -type f \( -name "waf" -o -name "waf-light" \) | head -n1)
-            if [ -n "$found" ]; then
-              cp "$found" waf
-              chmod +x waf
-            else
-              echo "Не найден waf или waf-light в исходниках talloc!"
-              exit 1
-            fi
+            echo "configure not found!"
+            exit 1
           fi
+
+      - name: Scan for important files after configure
+        run: |
+          set -e
+          cd talloc-2.4.2
+          echo "=== Сканируем директорию после configure (ищем waf/waflib и т.д.) ==="
+          find . -type f -print
 
       - name: Remove talloc test sources and patch wscript to skip tests
         run: |
           set -e
           cd talloc-2.4.2
-          # Удаляем все тестовые директории и файлы по маске
+          echo "=== Удаляем все тестовые исходники и патчим wscript ==="
           find . -type f -name "test*.c" -delete || true
           find . -type d -name "test*" -exec rm -rf {} + || true
           # Удаляем все упоминания тестов из wscript
-          sed -i '/def build_tests(ctx):/,/^$/d' wscript
-          sed -i '/ctx.recurse.*tests.*/d' wscript
-          sed -i '/bld.SAMBA_SUBSYSTEM.*tests.*/d' wscript
-          sed -i '/tests\/Makefile/d' wscript
-          sed -i '/tests = /d' wscript
-          sed -i '/replace-test/d' wscript
+          if [ -f wscript ]; then
+            sed -i '/def build_tests(ctx):/,/^$/d' wscript
+            sed -i '/ctx\.recurse.*tests.*/d' wscript
+            sed -i '/bld\.SAMBA_SUBSYSTEM.*tests.*/d' wscript
+            sed -i '/tests\/Makefile/d' wscript
+            sed -i '/tests = /d' wscript
+            sed -i '/replace-test/d' wscript
+            sed -i '/testsuite/d' wscript
+            sed -i '/test_/d' wscript
+          fi
 
-      - name: Configure and build talloc static (waf), stream output and save log
+      - name: Build talloc (native Android/Ananbox, output in terminal and log)
         run: |
           set -e
           export ANDROID_API=21
@@ -161,23 +170,27 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          # Всё выводим в терминал и сохраняем в лог
+          chmod +x waf
           {
             echo "=== waf configure ==="
-            python3 ./waf configure \
+            ./waf configure \
               --disable-python \
               --without-gettext \
               --prefix=$PWD/install \
               CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
             echo "=== waf build ==="
-            python3 ./waf build -v
+            ./waf build -v
             echo "=== waf install ==="
-            python3 ./waf install
+            ./waf install
           } 2>&1 | tee ../talloc_build.log
 
       - name: Package talloc artifacts
         run: |
           set -e
+          if [ ! -d talloc-2.4.2/install ]; then
+            echo "talloc-2.4.2/install not found, build failed!"
+            exit 1
+          fi
           tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
 
       # --- PROOT ---
