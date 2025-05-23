@@ -1,3 +1,4 @@
+---
 name: Build Boost, talloc, proot for Android ARM64 (bionic, ananbox compatible)
 
 on:
@@ -49,7 +50,8 @@ jobs:
         run: |
           echo "=== Install dependencies ==="
           sudo apt-get update
-          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip git python3 curl autoconf automake libtool pkg-config patch
+          sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip \
+            git python3 curl autoconf automake libtool pkg-config patch
           if [ $? -ne 0 ]; then
             echo "Error: Failed to install dependencies"
             exit 1
@@ -68,7 +70,8 @@ jobs:
         if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           echo "=== Download and extract Android NDK ==="
-          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip -O ndk.zip
+          wget https://dl.google.com/android/repository/android-ndk-r26c-linux.zip \
+            -O ndk.zip
           unzip -q ndk.zip
           mv android-ndk-r26c $HOME/android-ndk
           if [ $? -ne 0 ]; then
@@ -98,7 +101,8 @@ jobs:
         run: |
           echo "=== Set up Android NDK environment ==="
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" \
+            >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$HOME/android-ndk"
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           echo $PATH
@@ -132,7 +136,9 @@ jobs:
       - name: Download Boost source
         run: |
           echo "=== Download Boost source ==="
-          ./download_boost.sh "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" "boost-1.83.0.tar.xz"
+          ./download_boost.sh \
+            "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz" \
+            "boost-1.83.0.tar.xz"
           tar -xf boost-1.83.0.tar.xz
           mv boost-1.83.0 boost_1_83_0
           if [ $? -ne 0 ]; then
@@ -147,7 +153,10 @@ jobs:
           ANDROID_API=21
           NDK_HOME="$HOME/android-ndk"
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          echo "using clang : android : $TOOLCHAIN/clang++ --target=aarch64-linux-android$ANDROID_API --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" > $HOME/user-config.jam
+          echo "using clang : android : $TOOLCHAIN/clang++ \
+            --target=aarch64-linux-android$ANDROID_API \
+            --sysroot=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot ;" \
+            > $HOME/user-config.jam
           cat $HOME/user-config.jam
           if [ ! -f $HOME/user-config.jam ]; then
             echo "Error: Failed to create user-config.jam"
@@ -174,8 +183,10 @@ jobs:
           TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
           ./b2 toolset=clang-android \
-            cxxflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
-            linkflags="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
+            cxxflags="--target=aarch64-linux-android$ANDROID_API \
+              --sysroot=$SYSROOT -fPIC -std=c++14 -fvisibility=hidden" \
+            linkflags="--target=aarch64-linux-android$ANDROID_API \
+              --sysroot=$SYSROOT -fPIC -pie -Wl,--no-undefined -std=c++14" \
             target-os=android \
             address-model=64 \
             architecture=arm \
@@ -190,14 +201,9 @@ jobs:
             --build-dir=../boost_android_arm64_build \
             --layout=system \
             --user-config=$HOME/user-config.jam \
-            --with-date_time \
-            --with-filesystem \
-            --with-log \
-            --with-program_options \
-            --with-regex \
-            --with-serialization \
-            --with-system \
-            --with-thread \
+            --with-date_time --with-filesystem --with-log \
+            --with-program_options --with-regex --with-serialization \
+            --with-system --with-thread \
             -d+2 install -j$(nproc)
           if [ $? -ne 0 ]; then
             echo "Error: Boost build failed"
@@ -208,7 +214,8 @@ jobs:
       - name: Download and extract talloc
         run: |
           echo "=== Download and extract talloc ==="
-          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
+          wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz \
+            -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
           if [ $? -ne 0 ]; then
             echo "Error: Failed to download or extract talloc"
@@ -272,8 +279,10 @@ jobs:
             echo "Error: Failed to apply talloc skip-replace-tests patch"
             exit 1
           fi
-          grep "SKIP_REPLACE_TESTS" lib/replace/wscript || echo "Warning: SKIP_REPLACE_TESTS not found in wscript"
-          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c || echo "Warning: SKIP_REPLACE_TESTS not found in os2_delete.c"
+          grep "SKIP_REPLACE_TESTS" lib/replace/wscript \
+            || echo "Warning: SKIP_REPLACE_TESTS not found in wscript"
+          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c \
+            || echo "Warning: SKIP_REPLACE_TESTS not found in os2_delete.c"
 
       - name: Configure and build talloc static
         run: |
@@ -285,8 +294,10 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API \
+            --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API \
+            --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
           cat <<EOF >cross-answers.txt
           Checking uname sysname type: "Linux"
@@ -316,7 +327,8 @@ jobs:
           Checking for HAVE_NDIR_H: FAIL
           Checking for HAVE_DIR_H: FAIL
           EOF
-          ./configure build --prefix=$PWD/install --disable-rpath --disable-python --cross-compile --cross-answers=cross-answers.txt \
+          ./configure build --prefix=$PWD/install --disable-rpath \
+            --disable-python --cross-compile --cross-answers=cross-answers.txt \
             CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
           if [ $? -ne 0 ]; then
             echo "Error: talloc configure failed"
@@ -369,14 +381,14 @@ jobs:
            #include <sys/stat.h>
            #include <sys/types.h>
            #include <unistd.h>
-          
           EOF
           patch -p1 < android-basename.patch
           if [ $? -ne 0 ]; then
             echo "Error: Failed to apply proot patch"
             exit 1
           fi
-          grep "basename" src/cli/cli.c || echo "Warning: basename patch not applied correctly"
+          grep "basename" src/cli/cli.c \
+            || echo "Warning: basename patch not applied correctly"
 
       - name: Build proot for Android arm64-v8a
         if: success()
@@ -389,20 +401,26 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API \
+            --sysroot=$SYSROOT -fPIC -I$PWD/talloc-2.4.2/install/include \
+            -DANDROID -Wno-deprecated-declarations"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API \
+            --sysroot=$SYSROOT -fPIC -L$PWD/talloc-2.4.2/install/lib -ltalloc"
           export PROOT_UNBUNDLE_LOADER="$PWD/proot/libexec/proot"
           export PKG_CONFIG_PATH="$PWD/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
           make clean
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
+          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo \
+            CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
           cp -v proot $GITHUB_WORKSPACE/libproot.so
           if [ $? -ne 0 ]; then
             echo "Error: proot build failed"
             exit 1
           fi
           make clean
-          CFLAGS="$CFLAGS -DUSERLAND" make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
+          CFLAGS="$CFLAGS -DUSERLAND" \
+            make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo \
+            CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PROOT_UNBUNDLE_LOADER="$PROOT_UNBUNDLE_LOADER"
           cp -v proot $GITHUB_WORKSPACE/proot-userland
           if [ $? -ne 0 ]; then
             echo "Error: proot-userland build failed"
