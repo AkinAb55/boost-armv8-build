@@ -231,6 +231,7 @@ jobs:
                conf.check_python_headers()
            
                conf.check_function('strndup', 'string.h')
+          
           --- a/lib/replace/tests/os2_delete.c
           +++ b/lib/replace/tests/os2_delete.c
           @@ -65,7 +65,9 @@ static int test_readdir_os2_delete(void)
