@@ -219,6 +219,10 @@ jobs:
           echo "Modifying lib/replace/wscript to skip replace tests"
           # Backup original wscript
           cp lib/replace/wscript lib/replace/wscript.bak
+          if [ ! -f lib/replace/wscript.bak ]; then
+              echo "Error: Failed to create wscript.bak"
+              exit 1
+          fi
           # Add 'import os' after shebang, avoid duplicates
           if ! grep -q "import os" lib/replace/wscript; then
               sed -i '1a import os' lib/replace/wscript
@@ -256,52 +260,20 @@ jobs:
           # Verify wscript modifications
           echo "Modified lib/replace/wscript:"
           cat lib/replace/wscript
-          diff lib/replace/wscript.bak lib/replace/wscript || echo "No differences or backup not found"
+          echo "Differences between wscript.bak and wscript:"
+          diff -u lib/replace/wscript.bak lib/replace/wscript || echo "No differences detected (check manually)"
           grep "SKIP_REPLACE_TESTS" lib/replace/wscript \
             || { echo "Error: SKIP_REPLACE_TESTS not added to wscript"; exit 1; }
           grep "import os" lib/replace/wscript \
             || { echo "Error: import os not added to wscript"; exit 1; }
+          grep "replace_test_sources" lib/replace/wscript \
+            || { echo "Warning: replace_test_sources not found in wscript"; }
 
-          # Diagnostic: Show original os2_delete.c content
-          echo "Original lib/replace/tests/os2_delete.c:"
-          head -n 100 lib/replace/tests/os2_delete.c
-
-          # Apply patch for os2_delete.c
-          cat > skip-replace-tests-os2.patch <<- 'EOF'
-          --- a/lib/replace/tests/os2_delete.c
-          +++ b/lib/replace/tests/os2_delete.c
-          @@ -65,7 +65,9 @@ static int test_readdir_os2_delete(void)
-                  closedir(dirp);
-                  return -1;
-              }
-          +#ifndef SKIP_REPLACE_TESTS
-              off = telldir(dirp);
-          +#endif
-              while ((dp = readdir(dirp)) != NULL) {
-                  char *fname;
-                  if (strncmp(dp->d_name, "test", 4) != 0) {
-          @@ -82,7 +84,9 @@ static int test_readdir_os2_delete(void)
-                      continue;
-                  }
-              }
-          +#ifndef SKIP_REPLACE_TESTS
-              seekdir(dirp, off);
-          +#endif
-              closedir(dirp);
-              return 0;
-          }
-
-          EOF
-          patch -p1 < skip-replace-tests-os2.patch
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to apply os2_delete.c patch"
-            cat skip-replace-tests-os2.patch
-            echo "Current os2_delete.c content:"
-            cat lib/replace/tests/os2_delete.c
-            exit 1
-          fi
-          grep "#ifndef SKIP_REPLACE_TESTS" lib/replace/tests/os2_delete.c \
-            || { echo "Error: SKIP_REPLACE_TESTS not found in os2_delete.c"; exit 1; }
+          # Diagnostic: Confirm tests are skipped
+          echo "Checking if replace tests are skipped:"
+          grep "replace_test_sources = \[\]" lib/replace/wscript \
+            && echo "Success: replace_test_sources set to empty list, tests skipped" \
+            || echo "Warning: replace_test_sources not set to empty, tests may still run"
 
       - name: Configure and build talloc static
         run: |
