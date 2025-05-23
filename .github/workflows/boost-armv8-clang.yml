@@ -128,23 +128,42 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC (autotools/cross-answers) ---
+      # --- TALLOC (WAF, skip tests for Android) ---
       - name: Download and extract talloc
         run: |
           set -e
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Patch talloc to skip replace tests (autotools)
+      - name: Patch talloc wscript to skip tests for Android cross-compile
         run: |
           set -e
           cd talloc-2.4.2
-          # Отключаем любые тесты в Makefile.am если есть
-          [ -f Makefile.am ] && sed -i '/SUBDIRS/s/tests//' Makefile.am || true
-          # На всякий случай для waf/wscript тоже удалим тесты
-          [ -f wscript ] && sed -i '/def build_tests(ctx):/,/^$/d' wscript || true
+          # Remove all test builds: this disables building and compiling tests, which fail for Android cross-builds.
+          sed -i '/def build_tests(ctx):/,/^$/d' wscript
+          sed -i '/ctx.recurse.*tests.*/d' wscript
+          sed -i '/bld.SAMBA_SUBSYSTEM.*tests.*/d' wscript
+          sed -i '/tests\/Makefile/d' wscript
+          sed -i '/tests = /d' wscript
+          # Remove any test source files if present (not critical, but clean)
+          find . -name "test*.c" -delete || true
 
-      - name: Configure and build talloc static (autotools, cross-answers), capture log
+      - name: Prepare waf for talloc
+        run: |
+          set -e
+          cd talloc-2.4.2
+          # Use the waf-light that comes with samba/talloc
+          if [ ! -f waf ]; then
+            if [ -f waf-light ]; then
+              cp waf-light waf
+              chmod +x waf
+            else
+              echo "Neither waf nor waf-light found in talloc source!"
+              exit 1
+            fi
+          fi
+
+      - name: Configure and build talloc static (waf), capture log and stream
         run: |
           set -e
           export ANDROID_API=21
@@ -157,31 +176,19 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           cd talloc-2.4.2
-          cat <<EOF >cross-answers.txt
-          Checking uname sysname type: "Linux"
-          Checking uname machine type: "dontcare"
-          Checking uname release type: "dontcare"
-          Checking uname version type: "dontcare"
-          Checking simple C program: OK
-          rpath library support: OK
-          -Wl,--version-script support: FAIL
-          Checking getconf LFS_CFLAGS: OK
-          Checking for large file support without additional flags: OK
-          Checking for -D_FILE_OFFSET_BITS=64: OK
-          Checking for -D_LARGE_FILES: OK
-          Checking correct behavior of strtoll: OK
-          Checking for working strptime: OK
-          Checking for C99 vsnprintf: OK
-          Checking for HAVE_SHARED_MMAP: OK
-          Checking for HAVE_MREMAP: OK
-          Checking for HAVE_INCOHERENT_MMAP: OK
-          Checking for HAVE_SECURE_MKSTEMP: OK
-          Checking getconf large file support flags work: OK
-          Checking for HAVE_IFACE_IFCONF: FAIL
-          EOF
-          ./configure build --prefix=$PWD/install --disable-rpath --disable-python --cross-compile --cross-answers=cross-answers.txt CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > ../talloc_build.log 2>&1
-          make V=1 -j$(nproc) >> ../talloc_build.log 2>&1
-          make install >> ../talloc_build.log 2>&1
+          # Show configure & build output in terminal, also log to file
+          {
+            echo "=== waf configure ==="
+            python3 ./waf configure \
+              --disable-python \
+              --without-gettext \
+              --prefix=$PWD/install \
+              CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+            echo "=== waf build ==="
+            python3 ./waf build -v
+            echo "=== waf install ==="
+            python3 ./waf install
+          } 2>&1 | tee ../talloc_build.log
 
       - name: Package talloc artifacts
         run: |
@@ -252,8 +259,8 @@ jobs:
           name: proot_android_arm64
           path: proot_android_arm64.tar.gz
 
-      - name: Upload talloc build log on failure
-        if: failure()
+      - name: Upload talloc build log always
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: talloc_build_log
