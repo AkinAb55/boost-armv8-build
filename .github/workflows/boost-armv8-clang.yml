@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (custom proot sources, python extension removed)
+name: Build Boost, talloc, proot for Android ARM64 (custom proot sources, python extension hack)
 
 on:
   workflow_dispatch:
@@ -144,6 +144,19 @@ jobs:
             sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
           # Удаляем python extension полностью!
           rm -rf proot/src/extension/python
+
+      - name: Patch proot GNUmakefile to remove all python/proot_wrap/proot.i targets
+        run: |
+          sed -i '/extension\/python\//d' proot/src/GNUmakefile
+          sed -i '/proot_wrap/d' proot/src/GNUmakefile
+          sed -i '/python_extension/d' proot/src/GNUmakefile
+
+      # Если make всё равно требует файлы - создаём их пустыми (заглушка)
+      - name: Create python/proot_wrap stubs if needed (safety net)
+        run: |
+          mkdir -p proot/src/extension/python
+          touch proot/src/extension/python/proot.i
+          touch proot/src/proot_wrap.c
 
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
