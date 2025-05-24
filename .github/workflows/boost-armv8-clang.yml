@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (self-healing, robust, multi-strategy)
+name: Build Boost, talloc, proot for Android ARM64 (robust, manual, auto-include)
 
 on:
   workflow_dispatch:
@@ -104,49 +104,18 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC (MULTI-STRATEGY BUILD WITH SELF-HEALING) ---
+      # --- TALLOC MANUAL BUILD ---
       - name: Download and extract talloc
         run: |
           set -e
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
-          cp talloc-2.4.2.tar.gz talloc-2.4.2/
 
-      - name: Multi-strategy build for talloc (auto-detect, search, create, fallback)
+      - name: Manually build talloc for Android ARM64 with all includes
         run: |
           set -xe
           cd talloc-2.4.2
 
-          # 1. Автоматический поиск, создание и восстановление директорий и файлов
-          ensure_dir() { [ -d "$1" ] || (echo "Создаём директорию $1"; mkdir -p "$1"); }
-          ensure_file() { [ -f "$1" ] || (echo "Ищу $1 в интернете..."; wget -nv "$2" -O "$1" || echo "Не найден $1 в сети"); }
-          search_file() { find . -type f -name "$1" | head -1; }
-
-          # Попытка найти или создать install/lib и include
-          ensure_dir install
-          ensure_dir install/lib
-          ensure_dir install/include
-
-          # Попытка найти configure, autogen.sh, Makefile.am
-          if [ ! -f configure ]; then
-            echo "[INFO] configure отсутствует, ищем autogen.sh или Makefile.am..."
-            if [ -f autogen.sh ]; then
-              chmod +x autogen.sh
-              ./autogen.sh
-            elif [ -f Makefile.am ]; then
-              (command -v autoreconf && autoreconf -i) || true
-            else
-              echo "[WARN] configure и autogen.sh не найдены, пробую скачать исходники talloc заново"
-              wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-repair.tar.gz && tar -xf talloc-repair.tar.gz --strip-components=1
-            fi
-          fi
-
-          # Попытка автозаполнения отсутствующих файлов из waf/waflib, если вдруг выбран waf
-          if [ ! -f waf ] && [ -f configure ]; then
-            ./configure --disable-python --without-gettext --prefix="$PWD/install" || true
-          fi
-
-          # 2. Основная попытка: autotools (рекомендуется для Android)
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -154,61 +123,30 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -I$PWD -I$PWD/lib/replace"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
 
-          echo "==== Попытка 1: autotools configure/make ===="
-          ([ -f autogen.sh ] && ./autogen.sh) || true
+          mkdir -p install/include install/lib
 
-          ./configure --disable-python --without-gettext --host=aarch64-linux-android --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export AUTOTOOLS_FAILED=1
-          if [ ! "$AUTOTOOLS_FAILED" = "1" ]; then
-            make -j$(nproc) || export MAKE_FAILED=1
-            if [ ! "$MAKE_FAILED" = "1" ]; then
-              make install
-            fi
-          fi
+          # Автопоиск и компиляция зависимостей replace
+          cd lib/replace
+          for src in *.c; do
+            $CC $CFLAGS -c "$src" -o "${src%.c}.o"
+          done
+          $AR rcs libreplacestub.a *.o
+          cd ../..
 
-          # 3. Альтернатива: waf, если он был сгенерирован корректно
-          if [ "$AUTOTOOLS_FAILED" = "1" ] || [ "$MAKE_FAILED" = "1" ]; then
-            echo "==== Попытка 2: waf (если waf сгенерирован корректно) ===="
-            if [ -f waf ]; then
-              chmod +x waf
-              ./waf configure --disable-python --without-gettext --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export WAF_FAILED=1
-              if [ ! "$WAF_FAILED" = "1" ]; then
-                ./waf build -v
-                ./waf install
-              fi
-            fi
-          fi
+          # Сборка talloc с зависимостью от replace
+          $CC $CFLAGS -c talloc.c -o talloc.o
+          $AR rcs libtalloc.a talloc.o lib/replace/*.o
 
-          # 4. Альтернатива: ручная компиляция, если autotools и waf не сработали
-          if [ "$AUTOTOOLS_FAILED" = "1" ] && ([ "$WAF_FAILED" = "1" ] || [ ! -f waf ]); then
-            echo "==== Попытка 3: ручная компиляция ===="
-            SRC=$(search_file "talloc.c")
-            HDR=$(search_file "talloc.h")
-            if [ -n "$SRC" ] && [ -n "$HDR" ]; then
-              $CC $CFLAGS -c "$SRC" -o talloc.o
-              ar rcs libtalloc.a talloc.o
-              cp libtalloc.a install/lib/
-              cp "$HDR" install/include/
-              echo "talloc собран вручную"
-            else
-              echo "Не нашёл talloc.c или talloc.h для ручной сборки!"
-              exit 1
-            fi
-          fi
+          cp talloc.h install/include/
+          cp libtalloc.a install/lib/
+          # Также копируем все заголовки из lib/replace для корректной работы proot
+          cp lib/replace/*.h install/include/
 
-          # 5. Проверка и логирование результата
-          echo "==== install/include ===="
-          ls -al install/include || true
-          echo "==== install/lib ===="
-          ls -al install/lib || true
-          if [ ! -f install/lib/libtalloc.a ] && [ ! -f install/lib/libtalloc.so ]; then
-            echo "::error::talloc не собрался ни одним способом!"
-            exit 1
-          else
-            echo "talloc успешно собран и установлен."
-          fi
+          ls -al install/include
+          ls -al install/lib
 
       - name: Package talloc artifacts
         run: |
@@ -289,7 +227,6 @@ jobs:
             talloc-2.4.2/config.log
             talloc-2.4.2/build/config.log
 
-      # --- FINAL ARTIFACTS ---
       - name: Upload Boost artifact
         uses: actions/upload-artifact@v4
         with:
