@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64
+name: Build Boost, talloc, proot for Android ARM64 (robust, pythonless, safe Makefile)
 
 on:
   workflow_dispatch:
@@ -128,18 +128,18 @@ jobs:
       - name: Create talloc.pc for pkg-config
         run: |
           mkdir -p talloc-2.4.2/install/lib/pkgconfig
-          cat > talloc-2.4.2/install/lib/pkgconfig/talloc.pc << 'EOF'
-            prefix=${pcfiledir}/../..
-            exec_prefix=${prefix}
-            libdir=${exec_prefix}/lib
-            includedir=${prefix}/include
+          cat > talloc-2.4.2/install/lib/pkgconfig/talloc.pc <<'EOF'
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
 
-            Name: talloc
-            Description: Hierarchical pool based memory allocator with destructors
-            Version: 2.4.2
-            Libs: -L${libdir} -ltalloc
-            Cflags: -I${includedir}
-          EOF
+Name: talloc
+Description: Hierarchical pool based memory allocator with destructors
+Version: 2.4.2
+Libs: -L${libdir} -ltalloc
+Cflags: -I${includedir}
+EOF
 
       - name: Package talloc artifacts
         run: tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
@@ -159,38 +159,38 @@ jobs:
             sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
           rm -rf proot/src/extension/python
 
-      - name: Overwrite GNUmakefile with safe minimal version (with TABs)
+      - name: Overwrite GNUmakefile with safe minimal version
         run: |
-          cat > proot/src/GNUmakefile << 'EOF'
-          VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
-          SRC    = $(dir $(firstword $(MAKEFILE_LIST)))
-          CC ?= gcc
-          LD ?= $(CC)
-          AR ?= ar
-          RANLIB ?= ranlib
-          CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH) -I$(VPATH)/../lib/uthash/include
-          CFLAGS   += -g -Wall -Wextra -O2
-          CFLAGS   += $(shell pkg-config --cflags talloc)
-          LDFLAGS  += -Wl,-z,noexecstack
-          LDFLAGS  += $(shell pkg-config --libs talloc)
-          OBJECTS += \
-                  cli/cli.o cli/proot.o cli/note.o \
-                  execve/enter.o execve/exit.o execve/shebang.o execve/elf.o execve/ldso.o execve/auxv.o execve/aoxp.o \
-                  path/binding.o path/glue.o path/canon.o path/path.o path/proc.o path/temp.o \
-                  syscall/seccomp.o syscall/syscall.o syscall/chain.o syscall/enter.o syscall/exit.o syscall/sysnum.o syscall/socket.o syscall/heap.o syscall/rlimit.o \
-                  tracee/tracee.o tracee/mem.o tracee/reg.o tracee/event.o \
-                  ptrace/ptrace.o ptrace/user.o ptrace/wait.o \
-                  extension/extension.o extension/kompat/kompat.o extension/fake_id0/fake_id0.o extension/link2symlink/link2symlink.o extension/portmap/portmap.o extension/portmap/map.o loader/loader-wrapped.o
-          .DEFAULT_GOAL = proot
-          all: proot
-          proot: $(OBJECTS)
-          <TAB>$(LD) -o $@ $^ $(LDFLAGS)
-          %.o: %.c
-          <TAB>@mkdir -p $(dir $@)
-          <TAB>$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
-          clean:
-          <TAB>rm -f $(OBJECTS) proot
-          EOF
+          cat <<'EOF' > proot/src/GNUmakefile
+VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
+SRC    = $(dir $(firstword $(MAKEFILE_LIST)))
+CC ?= gcc
+LD ?= $(CC)
+AR ?= ar
+RANLIB ?= ranlib
+CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH) -I$(VPATH)/../lib/uthash/include
+CFLAGS   += -g -Wall -Wextra -O2
+CFLAGS   += $(shell pkg-config --cflags talloc)
+LDFLAGS  += -Wl,-z,noexecstack
+LDFLAGS  += $(shell pkg-config --libs talloc)
+OBJECTS += \
+	cli/cli.o cli/proot.o cli/note.o \
+	execve/enter.o execve/exit.o execve/shebang.o execve/elf.o execve/ldso.o execve/auxv.o execve/aoxp.o \
+	path/binding.o path/glue.o path/canon.o path/path.o path/proc.o path/temp.o \
+	syscall/seccomp.o syscall/syscall.o syscall/chain.o syscall/enter.o syscall/exit.o syscall/sysnum.o syscall/socket.o syscall/heap.o syscall/rlimit.o \
+	tracee/tracee.o tracee/mem.o tracee/reg.o tracee/event.o \
+	ptrace/ptrace.o ptrace/user.o ptrace/wait.o \
+	extension/extension.o extension/kompat/kompat.o extension/fake_id0/fake_id0.o extension/link2symlink/link2symlink.o extension/portmap/portmap.o extension/portmap/map.o loader/loader-wrapped.o
+.DEFAULT_GOAL = proot
+all: proot
+proot: $(OBJECTS)
+	$(LD) -o $@ $^ $(LDFLAGS)
+%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
+clean:
+	rm -f $(OBJECTS) proot
+EOF
 
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
