@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (robust, empty replace.h workaround)
+name: Build Boost, talloc, proot for Android ARM64 (custom proot sources)
 
 on:
   workflow_dispatch:
@@ -105,7 +105,6 @@ jobs:
         run: |
           set -xe
           cd talloc-2.4.2
-          # Подкладываем пустой replace.h, чтобы talloc.c не ругался
           touch replace.h
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
@@ -133,11 +132,19 @@ jobs:
       - name: Clone proot
         run: git clone --depth=1 https://github.com/Ananbox/proot.git proot
 
+      - name: Overwrite proot sources with custom files
+        run: |
+          # Скачиваем ваши кастомные файлы из вашего репозитория
+          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c   -O proot/src/path/binding.c
+          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.h   -O proot/src/path/binding.h
+          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/enter.c     -O proot/src/syscall/enter.c
+          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/ptrace.c    -O proot/src/ptrace/ptrace.c
+          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/mem.h       -O proot/src/tracee/mem.h
+
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
           set -e
           cd proot
-          # Write basename_patch.h without heredoc using echo and here-string
           echo '#ifdef __ANDROID__
           #include <string.h>
           static char *basename(char *path) {
