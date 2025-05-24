@@ -97,16 +97,23 @@ jobs:
         run: |
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC: только talloc.c, без replace ---
+      # --- TALLOC: talloc.c с минимальной поддержкой lib/replace ---
       - name: Download and extract talloc
         run: |
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android ARM64 (only talloc.c)
+      - name: Build talloc for Android ARM64 (with minimal lib/replace)
         run: |
           set -xe
           cd talloc-2.4.2
+
+          # Создаём минимальный config.h для lib/replace
+          echo -e "#ifndef TALLOC_DUMMY_CONFIG_H\n#define TALLOC_DUMMY_CONFIG_H\n\n#define HAVE_STDINT_H 1\n#define HAVE_STDDEF_H 1\n#define HAVE_ALLOCA_H 1\n#define HAVE_INTTYPES_H 1\n#define HAVE_SYS_TYPES_H 1\n#define HAVE_SYS_STAT_H 1\n#define HAVE_SYS_TIME_H 1\n#define HAVE_TIME_H 1\n#define HAVE_UNISTD_H 1\n#define HAVE_STRING_H 1\n#define HAVE_MEMORY_H 1\n#define HAVE_LIMITS_H 1\n#define HAVE_ASSERT_H 1\n#define HAVE_STDLIB_H 1\n#define HAVE_STDARG_H 1\n#define HAVE_SYS_MMAN_H 1\n#define HAVE_SYS_RESOURCE_H 1\n#define HAVE_SYS_WAIT_H 1\n#define HAVE_SYSLOG_H 1\n#define HAVE_SETENV 1\n#define HAVE_UNSETENV 1\n#define HAVE_SNPRINTF 1\n#define HAVE_VSNPRINTF 1\n#define HAVE_ASPRINTF 1\n#define HAVE_VASPRINTF 1\n#define HAVE_GETPAGESIZE 1\n#define HAVE_MMAP 1\n#define HAVE_SYS_SOCKET_H 1\n\n#define HAVE_BOOL 1\n#define HAVE__BOOL 1\n#define HAVE_STDBOOL_H 1\n\n#define _GNU_SOURCE 1\n#define _POSIX_SOURCE 1\n#define _POSIX_C_SOURCE 200809L\n\n#define __STDC_WANT_LIB_EXT1__ 1\n\n#endif" > config.h
+
+          # Копируем config.h в lib/replace
+          cp config.h lib/replace/
+
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -114,13 +121,31 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -I$PWD -I$PWD/lib/replace"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+
           mkdir -p install/include install/lib
+
+          # Компилируем файлы из lib/replace
+          cd lib/replace
+          for src in *.c; do
+            $CC $CFLAGS -c "$src" -o "${src%.c}.o"
+          done
+          $AR rcs libreplacestub.a *.o
+          cd ../..
+
+          # Компилируем talloc.c
           $CC $CFLAGS -c talloc.c -o talloc.o
-          $AR rcs libtalloc.a talloc.o
+
+          # Создаём libtalloc.a, включая объекты из lib/replace
+          $AR rcs libtalloc.a talloc.o lib/replace/*.o
+
+          # Копируем заголовочные файлы и библиотеку
           cp talloc.h install/include/
+          cp lib/replace/replace.h install/include/
+          cp config.h install/include/
           cp libtalloc.a install/lib/
+
           ls -al install/include
           ls -al install/lib
 
