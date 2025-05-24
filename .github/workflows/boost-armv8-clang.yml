@@ -19,7 +19,7 @@ jobs:
           set -e
           sudo apt-get update
           sudo apt-get install -y wget bzip2 tar build-essential ninja-build unzip \
-            git python3 curl autoconf automake libtool pkg-config patch
+            git python3 curl autoconf automake libtool pkg-config patch python3-setuptools python3-pip
 
       - name: Cache Android NDK
         id: cache-ndk
@@ -104,14 +104,14 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC: правильная кросс-компиляция для Android ---
+      # --- TALLOC ---
       - name: Download and extract talloc
         run: |
           set -e
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android arm64 (Ananbox compatible)
+      - name: Build talloc for Android arm64 (waf only)
         run: |
           set -e
           cd talloc-2.4.2
@@ -122,11 +122,11 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -Wno-deprecated-declarations"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
-          ./configure --host=aarch64-linux-android --disable-python --prefix=$PWD/install CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-          make -j$(nproc)
-          make install
+          python3 ./waf configure --disable-python --without-gettext --cross-compile --destdir=install --prefix=/ --cc="$CC" --ar="$AR" --ranlib="$RANLIB" --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS"
+          python3 ./waf build
+          python3 ./waf install
           ls -l install/lib
           ls -l install/include
 
@@ -141,35 +141,41 @@ jobs:
           set -e
           git clone --depth=1 https://github.com/Ananbox/proot.git proot
 
-      - name: Patch proot for Android bionic basename (show script in terminal and log)
+      - name: Patch proot for Android bionic basename (heredoc, no indent)
         run: |
           set -e
           cd proot
-          # Вставляем после #include <stdio.h> (или первой строки #include)
-          PATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)
-          PATCH_LINE=$((PATCH_LINE+1))
           cat <<'EOF' > basename_patch.h
             #ifdef __ANDROID__
             #include <string.h>
             static char *basename(char *path) {
-              char *last_slash_ptr;
+              int slash_index = -1;
+              int i = 0;
               if (path == NULL || *path == '\0')
                 return path;
-              last_slash_ptr = strrchr(path, '/');
-              if (last_slash_ptr != NULL)
-                return last_slash_ptr + 1;
+              while (path[i] != '\0') {
+                if (path[i] == '/') {
+                  slash_index = i;
+                }
+                i++;
+              }
+              if (slash_index != -1)
+                return path + slash_index + 1;
               return path;
             }
             #else
             #include <libgen.h>
             #endif
           EOF
+          # Вставляем после первой строки #include
+          PATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)
+          PATCH_LINE=$((PATCH_LINE+1))
           awk "NR==$PATCH_LINE{system(\"cat basename_patch.h\")} 1" src/cli/cli.c > src/cli/cli.c.patched
           mv src/cli/cli.c.patched src/cli/cli.c
           rm basename_patch.h
           cat src/cli/cli.c | head -30 | tee ../proot_patch_preview.log
 
-      - name: Build proot for Android arm64-v8a (show in terminal and log)
+      - name: Build proot for Android arm64-v8a
         run: |
           set -e
           export ANDROID_API=21
