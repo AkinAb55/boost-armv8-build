@@ -1,78 +1,148 @@
-21s
-Run set -e
-=== Файлы в /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 ===
-./test_pytalloc.c
-./pytalloc.c
-./talloc.h
-./pytalloc_private.h
-./buildtools/bin/waf
-./buildtools/wafsamba/wscript
-./buildtools/wafsamba/wafsamba.py
-./talloc.c
-./test_magic_differs_helper.c
-./wscript
-./testsuite.c
-./lib/replace/xattr.c
-./lib/replace/socket.c
-./lib/replace/tests/shared_mmap.c
-./lib/replace/tests/os2_delete.c
-./lib/replace/tests/incoherent_mmap.c
-./lib/replace/tests/snprintf.c
-./lib/replace/tests/getifaddrs.c
-./lib/replace/tests/strptime.c
-./lib/replace/tests/testsuite.c
-./lib/replace/tests/shared_mremap.c
-./lib/replace/tests/main.c
-./lib/replace/system/filesys.h
-./lib/replace/system/shmem.h
-./lib/replace/system/capability.h
-./lib/replace/system/glob.h
-./lib/replace/system/kerberos.h
-./lib/replace/system/locale.h
-./lib/replace/system/readline.h
-./lib/replace/system/select.h
-./lib/replace/system/dir.h
-./lib/replace/system/syslog.h
-./lib/replace/system/time.h
-./lib/replace/system/terminal.h
-./lib/replace/system/threads.h
-./lib/replace/system/gssapi.h
-./lib/replace/system/python.h
-./lib/replace/system/wait.h
-./lib/replace/system/passwd.h
-./lib/replace/system/network.h
-./lib/replace/system/iconv.h
-./lib/replace/dlfcn.c
-./lib/replace/socketpair.c
-./lib/replace/snprintf.c
-./lib/replace/getifaddrs.c
-./lib/replace/strptime.c
-./lib/replace/inet_ntop.c
-./lib/replace/getaddrinfo.c
-./lib/replace/wscript
-./lib/replace/closefrom.c
-./lib/replace/getaddrinfo.h
-./lib/replace/hdr_replace.h
-./lib/replace/replace-testsuite.h
-./lib/replace/configure
-./lib/replace/replace.c
-./lib/replace/inet_pton.c
-./lib/replace/inet_aton.c
-./lib/replace/replace-test.h
-./lib/replace/replace.h
-./lib/replace/win32_replace.h
-./lib/replace/timegm.c
-./lib/replace/inet_ntoa.c
-./lib/replace/poll.c
-./configure
-./compat/talloc_compat1.c
-./testsuite_main.c
-./third_party/waf/waflib/Tools/waf_unit_test.py
-./third_party/waf/waflib/extras/wafcache.py
-./third_party/waf/waflib/extras/waf_xattr.py
-./talloc_testsuite.h
-./pytalloc.h
-./pytalloc_util.c
+
+Navigation Menu
+
+Code
+Issues
+Pull requests
+Build Boost, talloc, proot for Android ARM64 (self-healing, robust, multi-strategy)
+Update boost-armv8-clang.yml #175
+Annotations
+1 error and 1 warning
+build-all
+failed 3 minutes ago in 4m 17s
+1s
+0s
+11s
+0s
+31s
+0s
+7s
+0s
+10s
+2m 45s
+3s
+2s
+18s
+Run set -xe
+  set -xe
+  cd talloc-2.4.2
+  
+  # 1. Автоматический поиск, создание и восстановление директорий и файлов
+  ensure_dir() { [ -d "$1" ] || (echo "Создаём директорию $1"; mkdir -p "$1"); }
+  ensure_file() { [ -f "$1" ] || (echo "Ищу $1 в интернете..."; wget -nv "$2" -O "$1" || echo "Не найден $1 в сети"); }
+  search_file() { find . -type f -name "$1" | head -1; }
+  
+  # Попытка найти или создать install/lib и include
+  ensure_dir install
+  ensure_dir install/lib
+  ensure_dir install/include
+  
+  # Попытка найти configure, autogen.sh, Makefile.am
+  if [ ! -f configure ]; then
+    echo "[INFO] configure отсутствует, ищем autogen.sh или Makefile.am..."
+    if [ -f autogen.sh ]; then
+      chmod +x autogen.sh
+      ./autogen.sh
+    elif [ -f Makefile.am ]; then
+      (command -v autoreconf && autoreconf -i) || true
+    else
+      echo "[WARN] configure и autogen.sh не найдены, пробую скачать исходники talloc заново"
+      wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-repair.tar.gz && tar -xf talloc-repair.tar.gz --strip-components=1
+    fi
+  fi
+  
+  # Попытка автозаполнения отсутствующих файлов из waf/waflib, если вдруг выбран waf
+  if [ ! -f waf ] && [ -f configure ]; then
+    ./configure --disable-python --without-gettext --prefix="$PWD/install" || true
+  fi
+  
+  # 2. Основная попытка: autotools (рекомендуется для Android)
+  export ANDROID_API=21
+  export NDK_HOME="$HOME/android-ndk"
+  export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+  export SYSROOT="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+  export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
+  export AR="$TOOLCHAIN/llvm-ar"
+  export RANLIB="$TOOLCHAIN/llvm-ranlib"
+  export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
+  export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
+  
+  echo "==== Попытка 1: autotools configure/make ===="
+  ([ -f autogen.sh ] && ./autogen.sh) || true
+  
+  ./configure --disable-python --without-gettext --host=aarch64-linux-android --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export AUTOTOOLS_FAILED=1
+  if [ ! "$AUTOTOOLS_FAILED" = "1" ]; then
+    make -j$(nproc) || export MAKE_FAILED=1
+    if [ ! "$MAKE_FAILED" = "1" ]; then
+      make install
+    fi
+  fi
+  
+  # 3. Альтернатива: waf, если он был сгенерирован корректно
+  if [ "$AUTOTOOLS_FAILED" = "1" ] || [ "$MAKE_FAILED" = "1" ]; then
+    echo "==== Попытка 2: waf (если waf сгенерирован корректно) ===="
+    if [ -f waf ]; then
+      chmod +x waf
+      ./waf configure --disable-python --without-gettext --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export WAF_FAILED=1
+      if [ ! "$WAF_FAILED" = "1" ]; then
+        ./waf build -v
+        ./waf install
+      fi
+    fi
+  fi
+  
+  # 4. Альтернатива: ручная компиляция, если autotools и waf не сработали
+  if [ "$AUTOTOOLS_FAILED" = "1" ] && ([ "$WAF_FAILED" = "1" ] || [ ! -f waf ]); then
+    echo "==== Попытка 3: ручная компиляция ===="
+    SRC=$(search_file "talloc.c")
+    HDR=$(search_file "talloc.h")
+    if [ -n "$SRC" ] && [ -n "$HDR" ]; then
+      $CC $CFLAGS -c "$SRC" -o talloc.o
+      ar rcs libtalloc.a talloc.o
+      cp libtalloc.a install/lib/
+      cp "$HDR" install/include/
+      echo "talloc собран вручную"
+    else
+      echo "Не нашёл talloc.c или talloc.h для ручной сборки!"
+      exit 1
+    fi
+  fi
+  
+  # 5. Проверка и логирование результата
+  echo "==== install/include ===="
+  ls -al install/include || true
+  echo "==== install/lib ===="
+  ls -al install/lib || true
+  if [ ! -f install/lib/libtalloc.a ] && [ ! -f install/lib/libtalloc.so ]; then
+    echo "::error::talloc не собрался ни одним способом!"
+    exit 1
+  else
+    echo "talloc успешно собран и установлен."
+  fi
+  shell: /usr/bin/bash -e {0}
+  env:
+    ANDROID_NDK_HOME: /home/runner/android-ndk
+    PATH: /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
++ cd talloc-2.4.2
++ ensure_dir install
++ '[' -d install ']'
++ echo 'Создаём директорию install'
+Создаём директорию install
++ mkdir -p install
++ ensure_dir install/lib
++ '[' -d install/lib ']'
++ echo 'Создаём директорию install/lib'
+Создаём директорию install/lib
++ mkdir -p install/lib
++ ensure_dir install/include
++ '[' -d install/include ']'
++ echo 'Создаём директорию install/include'
+Создаём директорию install/include
++ mkdir -p install/include
++ '[' '!' -f configure ']'
++ '[' '!' -f waf ']'
++ '[' -f configure ']'
++ ./configure --disable-python --without-gettext --prefix=/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/install
 Setting top to                           : /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 
 Setting out to                           : /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/bin 
 Checking for 'gcc' (C compiler)          : /usr/bin/gcc 
@@ -531,18 +601,6 @@ Checking for struct timespec                                                    
 Checking for header arpa/nameser.h                                                : yes 
 Checking for header resolv.h                                                      : yes 
 Checking for res_search                                                           : ok 
-Checking for header libintl.h                                                     : yes 
-Checking for library intl                                                         : no 
-Checking for declaration of dgettext                                              : ok 
-Checking for declaration of gettext                                               : ok 
-Checking for declaration of bindtextdomain                                        : ok 
-Checking for declaration of textdomain                                            : ok 
-Checking for declaration of bind_textdomain_codeset                               : ok 
-Checking for bindtextdomain                                                       : ok 
-Checking for textdomain                                                           : ok 
-Checking for bind_textdomain_codeset                                              : ok 
-Checking for dgettext                                                             : ok 
-Checking for gettext                                                              : ok 
 Checking for pthread_create                                                       : ok 
 Checking for pthread_attr_init                                                    : ok 
 Checking for pthread_mutexattr_setrobust                                          : ok 
@@ -623,384 +681,73 @@ Checking for program 'python3'                                                  
 Checking for program 'python'                                                     : /usr/bin/python3 
 Checking for program 'python3'                                                    : /usr/bin/python3 
 Checking for python version >= 3.6.0                                              : 3.10.12 
-python-config                                                                     : /usr/bin/python3-config 
-Asking python-config for pyembed '--cflags --libs --ldflags --embed' flags        : yes 
-Testing pyembed configuration                                                     : yes 
-Asking python-config for pyext '--cflags --libs --ldflags' flags                  : yes 
-Testing pyext configuration                                                       : yes 
-'configure' finished successfully (19.076s)
-Восстанавливаем waf из https://waf.io/waf-2.0.25
-2025-05-24 10:02:37 URL:https://waf.io/waf-2.0.25 [105631/105631] -> "waf" [1]
-Удаляем тестовые исходники и патчим wscript
-Попытка сборки talloc 1...
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Сборка talloc не удалась, пробуем автоисправление...
-=== Файлы в /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 ===
-./.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Tools/waf_unit_test.py
-./bin/default/config.h
-./pytalloc.c
-./talloc.h
-./pytalloc_private.h
-./buildtools/bin/waf
-./buildtools/wafsamba/wscript
-./buildtools/wafsamba/wafsamba.py
-./buildtools/wafsamba/__pycache__/wafsamba.cpython-310.pyc
-./talloc.c
-./wscript
-./lib/replace/xattr.c
-./lib/replace/socket.c
-./lib/replace/system/filesys.h
-./lib/replace/system/shmem.h
-./lib/replace/system/capability.h
-./lib/replace/system/glob.h
-./lib/replace/system/kerberos.h
-./lib/replace/system/locale.h
-./lib/replace/system/readline.h
-./lib/replace/system/select.h
-./lib/replace/system/dir.h
-./lib/replace/system/syslog.h
-./lib/replace/system/time.h
-./lib/replace/system/terminal.h
-./lib/replace/system/threads.h
-./lib/replace/system/gssapi.h
-./lib/replace/system/python.h
-./lib/replace/system/wait.h
-./lib/replace/system/passwd.h
-./lib/replace/system/network.h
-./lib/replace/system/iconv.h
-./lib/replace/dlfcn.c
-./lib/replace/socketpair.c
-./lib/replace/snprintf.c
-./lib/replace/getifaddrs.c
-./lib/replace/strptime.c
-./lib/replace/inet_ntop.c
-./lib/replace/getaddrinfo.c
-./lib/replace/wscript
-./lib/replace/closefrom.c
-./lib/replace/getaddrinfo.h
-./lib/replace/hdr_replace.h
-./lib/replace/replace-testsuite.h
-./lib/replace/configure
-./lib/replace/replace.c
-./lib/replace/inet_pton.c
-./lib/replace/inet_aton.c
-./lib/replace/replace-test.h
-./lib/replace/replace.h
-./lib/replace/win32_replace.h
-./lib/replace/timegm.c
-./lib/replace/inet_ntoa.c
-./lib/replace/poll.c
-./configure
-./compat/talloc_compat1.c
-./third_party/waf/waflib/Tools/waf_unit_test.py
-./third_party/waf/waflib/extras/wafcache.py
-./third_party/waf/waflib/extras/waf_xattr.py
-./talloc_testsuite.h
-./waf
-./pytalloc.h
-./pytalloc_util.c
-Попытка сборки talloc 2...
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Сборка talloc не удалась, пробуем автоисправление...
-=== Файлы в /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 ===
-./.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Tools/waf_unit_test.py
-./bin/default/config.h
-./pytalloc.c
-./talloc.h
-./pytalloc_private.h
-./buildtools/bin/waf
-./buildtools/wafsamba/wscript
-./buildtools/wafsamba/wafsamba.py
-./buildtools/wafsamba/__pycache__/wafsamba.cpython-310.pyc
-./talloc.c
-./wscript
-./lib/replace/xattr.c
-./lib/replace/socket.c
-./lib/replace/system/filesys.h
-./lib/replace/system/shmem.h
-./lib/replace/system/capability.h
-./lib/replace/system/glob.h
-./lib/replace/system/kerberos.h
-./lib/replace/system/locale.h
-./lib/replace/system/readline.h
-./lib/replace/system/select.h
-./lib/replace/system/dir.h
-./lib/replace/system/syslog.h
-./lib/replace/system/time.h
-./lib/replace/system/terminal.h
-./lib/replace/system/threads.h
-./lib/replace/system/gssapi.h
-./lib/replace/system/python.h
-./lib/replace/system/wait.h
-./lib/replace/system/passwd.h
-./lib/replace/system/network.h
-./lib/replace/system/iconv.h
-./lib/replace/dlfcn.c
-./lib/replace/socketpair.c
-./lib/replace/snprintf.c
-./lib/replace/getifaddrs.c
-./lib/replace/strptime.c
-./lib/replace/inet_ntop.c
-./lib/replace/getaddrinfo.c
-./lib/replace/wscript
-./lib/replace/closefrom.c
-./lib/replace/getaddrinfo.h
-./lib/replace/hdr_replace.h
-./lib/replace/replace-testsuite.h
-./lib/replace/configure
-./lib/replace/replace.c
-./lib/replace/inet_pton.c
-./lib/replace/inet_aton.c
-./lib/replace/replace-test.h
-./lib/replace/replace.h
-./lib/replace/win32_replace.h
-./lib/replace/timegm.c
-./lib/replace/inet_ntoa.c
-./lib/replace/poll.c
-./configure
-./compat/talloc_compat1.c
-./third_party/waf/waflib/Tools/waf_unit_test.py
-./third_party/waf/waflib/extras/wafcache.py
-./third_party/waf/waflib/extras/waf_xattr.py
-./talloc_testsuite.h
-./waf
-./pytalloc.h
-./pytalloc_util.c
-Попытка сборки talloc 3...
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Waf: The wscript in '/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2' is unreadable
-Traceback (most recent call last):
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 102, in waf_entry_point
-    set_main_module(wscript)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Scripting.py", line 142, in set_main_module
-    Context.g_module=Context.load_module(file_path)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Context.py", line 362, in load_module
-    exec(compile(code,path,'exec'),module.__dict__)
-  File "/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/wscript", line 98
-    install=False)
-                 ^
-SyntaxError: unmatched ')'
-Сборка talloc не удалась, пробуем автоисправление...
-=== Файлы в /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 ===
-./.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Tools/waf_unit_test.py
-./bin/default/config.h
-./pytalloc.c
-./talloc.h
-./pytalloc_private.h
-./buildtools/bin/waf
-./buildtools/wafsamba/wscript
-./buildtools/wafsamba/wafsamba.py
-./buildtools/wafsamba/__pycache__/wafsamba.cpython-310.pyc
-./talloc.c
-./wscript
-./lib/replace/xattr.c
-./lib/replace/socket.c
-./lib/replace/system/filesys.h
-./lib/replace/system/shmem.h
-./lib/replace/system/capability.h
-./lib/replace/system/glob.h
-./lib/replace/system/kerberos.h
-./lib/replace/system/locale.h
-./lib/replace/system/readline.h
-./lib/replace/system/select.h
-./lib/replace/system/dir.h
-./lib/replace/system/syslog.h
-./lib/replace/system/time.h
-./lib/replace/system/terminal.h
-./lib/replace/system/threads.h
-./lib/replace/system/gssapi.h
-./lib/replace/system/python.h
-./lib/replace/system/wait.h
-./lib/replace/system/passwd.h
-./lib/replace/system/network.h
-./lib/replace/system/iconv.h
-./lib/replace/dlfcn.c
-./lib/replace/socketpair.c
-./lib/replace/snprintf.c
-./lib/replace/getifaddrs.c
-./lib/replace/strptime.c
-./lib/replace/inet_ntop.c
-./lib/replace/getaddrinfo.c
-./lib/replace/wscript
-./lib/replace/closefrom.c
-./lib/replace/getaddrinfo.h
-./lib/replace/hdr_replace.h
-./lib/replace/replace-testsuite.h
-./lib/replace/configure
-./lib/replace/replace.c
-./lib/replace/inet_pton.c
-./lib/replace/inet_aton.c
-./lib/replace/replace-test.h
-./lib/replace/replace.h
-./lib/replace/win32_replace.h
-./lib/replace/timegm.c
-./lib/replace/inet_ntoa.c
-./lib/replace/poll.c
-./configure
-./compat/talloc_compat1.c
-./third_party/waf/waflib/Tools/waf_unit_test.py
-./third_party/waf/waflib/extras/wafcache.py
-./third_party/waf/waflib/extras/waf_xattr.py
-./talloc_testsuite.h
-./waf
-./pytalloc.h
-./pytalloc_util.c
-Не удалось собрать talloc после 3 попыток, завершаем с ошибкой.
-=== Файлы в /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 ===
-./.waf3-2.0.25-767522112be77f8585812fcfaa08e805/waflib/Tools/waf_unit_test.py
-./bin/default/config.h
-./pytalloc.c
-./talloc.h
-./pytalloc_private.h
-./buildtools/bin/waf
-./buildtools/wafsamba/wscript
-./buildtools/wafsamba/wafsamba.py
-./buildtools/wafsamba/__pycache__/wafsamba.cpython-310.pyc
-./talloc.c
-./wscript
-./lib/replace/xattr.c
-./lib/replace/socket.c
-./lib/replace/system/filesys.h
-./lib/replace/system/shmem.h
-./lib/replace/system/capability.h
-./lib/replace/system/glob.h
-./lib/replace/system/kerberos.h
-./lib/replace/system/locale.h
-./lib/replace/system/readline.h
-./lib/replace/system/select.h
-./lib/replace/system/dir.h
-./lib/replace/system/syslog.h
-./lib/replace/system/time.h
-./lib/replace/system/terminal.h
-./lib/replace/system/threads.h
-./lib/replace/system/gssapi.h
-./lib/replace/system/python.h
-./lib/replace/system/wait.h
-./lib/replace/system/passwd.h
-./lib/replace/system/network.h
-./lib/replace/system/iconv.h
-./lib/replace/dlfcn.c
-./lib/replace/socketpair.c
-./lib/replace/snprintf.c
-./lib/replace/getifaddrs.c
-./lib/replace/strptime.c
-./lib/replace/inet_ntop.c
-./lib/replace/getaddrinfo.c
-./lib/replace/wscript
-./lib/replace/closefrom.c
-./lib/replace/getaddrinfo.h
-./lib/replace/hdr_replace.h
-./lib/replace/replace-testsuite.h
-./lib/replace/configure
-./lib/replace/replace.c
-./lib/replace/inet_pton.c
-./lib/replace/inet_aton.c
-./lib/replace/replace-test.h
-./lib/replace/replace.h
-./lib/replace/win32_replace.h
-./lib/replace/timegm.c
-./lib/replace/inet_ntoa.c
-./lib/replace/poll.c
-./configure
-./compat/talloc_compat1.c
-./third_party/waf/waflib/Tools/waf_unit_test.py
-./third_party/waf/waflib/extras/wafcache.py
-./third_party/waf/waflib/extras/waf_xattr.py
-./talloc_testsuite.h
-./waf
-./pytalloc.h
-./pytalloc_util.c
-Error: Process completed
+python headers                                                                    : Check disabled due to --disable-python 
+'configure' finished successfully (17.792s)
++ export ANDROID_API=21
++ ANDROID_API=21
++ export NDK_HOME=/home/runner/android-ndk
++ NDK_HOME=/home/runner/android-ndk
++ export TOOLCHAIN=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
++ TOOLCHAIN=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin
++ export SYSROOT=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot
++ SYSROOT=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot
++ export CC=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
++ CC=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
++ export AR=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
++ AR=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
++ export RANLIB=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib
++ RANLIB=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib
++ export 'CFLAGS=--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -DANDROID'
++ CFLAGS='--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -DANDROID'
++ export 'LDFLAGS=--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC'
++ LDFLAGS='--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC'
++ echo '==== Попытка 1: autotools configure/make ===='
++ '[' -f autogen.sh ']'
++ true
++ ./configure --disable-python --without-gettext --host=aarch64-linux-android --prefix=/home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/install CC=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang AR=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar RANLIB=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib 'CFLAGS=--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -DANDROID' 'LDFLAGS=--target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC'
+==== Попытка 1: autotools configure/make ====
+Setting top to                           : /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2 
+Setting out to                           : /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/bin 
+Checking for 'gcc' (C compiler)          : not found 
+Checking for 'clang' (C compiler)        : /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang 
+Checking for program 'git'               : /usr/bin/git 
+Checking for c flags '-MMD'              : yes 
+Checking for program 'gdb'               : not found 
+Checking for header sys/utsname.h        : yes 
+Checking uname sysname type              : not found 
+Checking uname machine type              : not found 
+Checking uname release type              : not found 
+Checking uname version type              : not found 
+Checking for header stdio.h              : yes 
+Checking simple C program                : not found 
+The configuration failed
+(complete log in /home/runner/work/boost-armv8-build/boost-armv8-build/talloc-2.4.2/bin/config.log)
++ export AUTOTOOLS_FAILED=1
++ AUTOTOOLS_FAILED=1
++ '[' '!' 1 = 1 ']'
++ '[' 1 = 1 ']'
++ echo '==== Попытка 2: waf (если waf сгенерирован корректно) ===='
+==== Попытка 2: waf (если waf сгенерирован корректно) ====
++ '[' -f waf ']'
++ '[' 1 = 1 ']'
++ '[' '' = 1 ']'
++ '[' '!' -f waf ']'
++ echo '==== Попытка 3: ручная компиляция ===='
+==== Попытка 3: ручная компиляция ====
+++ search_file talloc.c
+++ find . -type f -name talloc.c
+++ head -1
++ SRC=./talloc.c
+++ search_file talloc.h
+++ find . -type f -name talloc.h
+++ head -1
++ HDR=./talloc.h
++ '[' -n ./talloc.c ']'
++ '[' -n ./talloc.h ']'
++ /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang --target=aarch64-linux-android21 --sysroot=/home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -DANDROID -c ./talloc.c -o talloc.o
+./talloc.c:33:10: fatal error: 'replace.h' file not found
+#include "replace.h"
+         ^~~~~~~~~~~
+1 error generated.
+Error: Process completed with exit code 1.
+0s
