@@ -149,21 +149,21 @@ jobs:
           PATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)
           PATCH_LINE=$((PATCH_LINE+1))
           cat <<'EOF' > basename_patch.h
-#ifdef __ANDROID__
-#include <string.h>
-static char *basename(char *path) {
-  char *last_slash_ptr;
-  if (path == NULL || *path == '\0')
-    return path;
-  last_slash_ptr = strrchr(path, '/');
-  if (last_slash_ptr != NULL)
-    return last_slash_ptr + 1;
-  return path;
-}
-#else
-#include <libgen.h>
-#endif
-EOF
+            #ifdef __ANDROID__
+            #include <string.h>
+            static char *basename(char *path) {
+              char *last_slash_ptr;
+              if (path == NULL || *path == '\0')
+                return path;
+              last_slash_ptr = strrchr(path, '/');
+              if (last_slash_ptr != NULL)
+                return last_slash_ptr + 1;
+              return path;
+            }
+            #else
+            #include <libgen.h>
+            #endif
+          EOF
           awk "NR==$PATCH_LINE{system(\"cat basename_patch.h\")} 1" src/cli/cli.c > src/cli/cli.c.patched
           mv src/cli/cli.c.patched src/cli/cli.c
           rm basename_patch.h
