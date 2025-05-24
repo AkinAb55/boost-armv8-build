@@ -114,6 +114,13 @@ jobs:
           # Копируем config.h в lib/replace
           cp config.h lib/replace/
 
+          # Патчим replace.h, чтобы избежать конфликтов
+          sed -i '/typedef long long intptr_t;/d' lib/replace/replace.h
+          sed -i '/typedef unsigned long long uintptr_t;/d' lib/replace/replace.h
+          sed -i '/typedef unsigned long long ptrdiff_t;/d' lib/replace/replace.h
+          sed -i '/typedef long useconds_t;/d' lib/replace/replace.h
+          echo "#ifndef RTLD_DEFAULT\n#define RTLD_DEFAULT ((void *)0)\n#endif" >> lib/replace/replace.h
+
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
