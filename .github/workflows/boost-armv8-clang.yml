@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (robust, waf-fix, ananbox compatible)
+name: Build Boost, talloc, proot for Android ARM64 (self-healing, robust, multi-strategy)
 
 on:
   workflow_dispatch:
@@ -104,17 +104,49 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC (NO waf download, only auto-generated waf) ---
+      # --- TALLOC (MULTI-STRATEGY BUILD WITH SELF-HEALING) ---
       - name: Download and extract talloc
         run: |
           set -e
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
+          cp talloc-2.4.2.tar.gz talloc-2.4.2/
 
-      - name: Build talloc for Android arm64 using only native waf
+      - name: Multi-strategy build for talloc (auto-detect, search, create, fallback)
         run: |
-          set -e
+          set -xe
           cd talloc-2.4.2
+
+          # 1. Автоматический поиск, создание и восстановление директорий и файлов
+          ensure_dir() { [ -d "$1" ] || (echo "Создаём директорию $1"; mkdir -p "$1"); }
+          ensure_file() { [ -f "$1" ] || (echo "Ищу $1 в интернете..."; wget -nv "$2" -O "$1" || echo "Не найден $1 в сети"); }
+          search_file() { find . -type f -name "$1" | head -1; }
+
+          # Попытка найти или создать install/lib и include
+          ensure_dir install
+          ensure_dir install/lib
+          ensure_dir install/include
+
+          # Попытка найти configure, autogen.sh, Makefile.am
+          if [ ! -f configure ]; then
+            echo "[INFO] configure отсутствует, ищем autogen.sh или Makefile.am..."
+            if [ -f autogen.sh ]; then
+              chmod +x autogen.sh
+              ./autogen.sh
+            elif [ -f Makefile.am ]; then
+              (command -v autoreconf && autoreconf -i) || true
+            else
+              echo "[WARN] configure и autogen.sh не найдены, пробую скачать исходники talloc заново"
+              wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-repair.tar.gz && tar -xf talloc-repair.tar.gz --strip-components=1
+            fi
+          fi
+
+          # Попытка автозаполнения отсутствующих файлов из waf/waflib, если вдруг выбран waf
+          if [ ! -f waf ] && [ -f configure ]; then
+            ./configure --disable-python --without-gettext --prefix="$PWD/install" || true
+          fi
+
+          # 2. Основная попытка: autotools (рекомендуется для Android)
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -125,27 +157,58 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
 
-          # Удаляем waf, waflib, waf-light если они присутствуют
-          rm -f waf waf-light || true
-          rm -rf waflib || true
+          echo "==== Попытка 1: autotools configure/make ===="
+          ([ -f autogen.sh ] && ./autogen.sh) || true
 
-          # Генерируем waf со штатного configure
-          chmod +x configure
-          ./configure --disable-python --without-gettext --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-          # Если waf появился, используем его
-          if [ -f waf ]; then
-            chmod +x waf
-            ./waf build -v
-            ./waf install
-          else
-            # Если waf не появился, fallback: обычный make
-            make -j$(nproc)
-            make install
+          ./configure --disable-python --without-gettext --host=aarch64-linux-android --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export AUTOTOOLS_FAILED=1
+          if [ ! "$AUTOTOOLS_FAILED" = "1" ]; then
+            make -j$(nproc) || export MAKE_FAILED=1
+            if [ ! "$MAKE_FAILED" = "1" ]; then
+              make install
+            fi
           fi
 
-          # Проверка результата
-          ls -l install/include
-          ls -l install/lib
+          # 3. Альтернатива: waf, если он был сгенерирован корректно
+          if [ "$AUTOTOOLS_FAILED" = "1" ] || [ "$MAKE_FAILED" = "1" ]; then
+            echo "==== Попытка 2: waf (если waf сгенерирован корректно) ===="
+            if [ -f waf ]; then
+              chmod +x waf
+              ./waf configure --disable-python --without-gettext --prefix="$PWD/install" CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" || export WAF_FAILED=1
+              if [ ! "$WAF_FAILED" = "1" ]; then
+                ./waf build -v
+                ./waf install
+              fi
+            fi
+          fi
+
+          # 4. Альтернатива: ручная компиляция, если autotools и waf не сработали
+          if [ "$AUTOTOOLS_FAILED" = "1" ] && ([ "$WAF_FAILED" = "1" ] || [ ! -f waf ]); then
+            echo "==== Попытка 3: ручная компиляция ===="
+            SRC=$(search_file "talloc.c")
+            HDR=$(search_file "talloc.h")
+            if [ -n "$SRC" ] && [ -n "$HDR" ]; then
+              $CC $CFLAGS -c "$SRC" -o talloc.o
+              ar rcs libtalloc.a talloc.o
+              cp libtalloc.a install/lib/
+              cp "$HDR" install/include/
+              echo "talloc собран вручную"
+            else
+              echo "Не нашёл talloc.c или talloc.h для ручной сборки!"
+              exit 1
+            fi
+          fi
+
+          # 5. Проверка и логирование результата
+          echo "==== install/include ===="
+          ls -al install/include || true
+          echo "==== install/lib ===="
+          ls -al install/lib || true
+          if [ ! -f install/lib/libtalloc.a ] && [ ! -f install/lib/libtalloc.so ]; then
+            echo "::error::talloc не собрался ни одним способом!"
+            exit 1
+          else
+            echo "talloc успешно собран и установлен."
+          fi
 
       - name: Package talloc artifacts
         run: |
@@ -205,7 +268,7 @@ jobs:
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
           export PKG_CONFIG_PATH="$GITHUB_WORKSPACE/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
-          make clean
+          make clean || true
           make V=1 CC="$CC" LD="$CC" AR="$AR" RANLIB="$RANLIB" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > ../../proot_build.log 2>&1 || { tail -100 ../../proot_build.log; exit 1; }
           file proot || true
           cp -v proot $GITHUB_WORKSPACE/libproot.so || { echo "::error::proot binary not built!"; exit 1; }
