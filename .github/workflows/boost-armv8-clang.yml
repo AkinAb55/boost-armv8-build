@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (custom proot sources, python extension hack)
+name: Build Boost, talloc, proot for Android ARM64 (robust python hack)
 
 on:
   workflow_dispatch:
@@ -150,6 +150,8 @@ jobs:
           sed -i '/extension\/python\//d' proot/src/GNUmakefile
           sed -i '/proot_wrap/d' proot/src/GNUmakefile
           sed -i '/python_extension/d' proot/src/GNUmakefile
+          sed -i '/proot\.i/d' proot/src/GNUmakefile
+          sed -i '${/^$/d;}' proot/src/GNUmakefile
 
       # Если make всё равно требует файлы - создаём их пустыми (заглушка)
       - name: Create python/proot_wrap stubs if needed (safety net)
