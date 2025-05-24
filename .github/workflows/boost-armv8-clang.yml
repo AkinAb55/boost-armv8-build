@@ -111,47 +111,30 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Auto-generate waf for talloc if missing
+      - name: Prepare and build talloc for Android arm64
         run: |
           set -e
           cd talloc-2.4.2
+          # Подготовка waf через configure/autogen.sh, если waf отсутствует
           if [ ! -f waf ]; then
-            echo "::group::Generating waf"
-            # Проверяем возможные пути, где может быть waf-light или autogen скрипт
-            if [ -f buildtools/bin/waf-light ]; then
-              cp buildtools/bin/waf-light waf
-              chmod +x waf
-              echo "[INFO] waf-light found and copied."
-            elif [ -f script/autogen-waf ]; then
-              python3 script/autogen-waf
-              echo "[INFO] script/autogen-waf executed."
+            if [ -f ./configure ]; then
+              echo "[INFO] Running ./configure to generate waf"
+              chmod +x configure || true
+              ./configure
             elif [ -f autogen.sh ]; then
+              echo "[INFO] Running ./autogen.sh to generate waf"
+              chmod +x autogen.sh || true
               ./autogen.sh
-              echo "[INFO] autogen.sh executed."
             else
-              # Попытка скачать waf из интернета, если ничего не найдено
-              wget https://waf.io/waf-2.0.22 -O waf
-              chmod +x waf
-              echo "[WARN] Downloaded waf from waf.io as fallback."
+              echo "::error::Neither configure nor autogen.sh found to generate waf!"
+              ls -l
+              exit 1
             fi
-            echo "::endgroup::"
-          else
-            echo "[INFO] waf already present."
           fi
-          # Проверка после всех попыток
+          # Проверка после генерации
           if [ ! -f waf ]; then
-            echo "::error::Cannot find or generate waf for talloc!"
+            echo "::error::waf is missing after ./configure/autogen.sh!"
             ls -l
-            exit 1
-          fi
-
-      - name: Build talloc for Android arm64 (auto-find waf)
-        run: |
-          set -e
-          cd talloc-2.4.2
-          # Поиск waf
-          if [ ! -f waf ]; then
-            echo "::error::waf is missing even after generation! Aborting."
             exit 1
           fi
           export ANDROID_API=21
@@ -164,7 +147,7 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           echo "::group::Talloc configure"
-          python3 ./waf configure --disable-python --without-gettext --cross-compile --destdir=install --prefix=/ --cc="$CC" --ar="$AR" --ranlib="$RANLIB" --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS" || { cat config.log || true; exit 1; }
+          python3 ./waf configure --disable-python --without-gettext --cross-compile --destdir=install --prefix=/ --cc="$CC" --ar="$AR" --ranlib="$RANLIB" --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS" || { ls -l ; cat config.log || true; exit 1; }
           echo "::endgroup::"
           echo "::group::Talloc build"
           python3 ./waf build || { tail -100 build/config.log || true; exit 1; }
