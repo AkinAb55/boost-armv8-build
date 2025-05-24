@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (minimal, robust)
+name: Build Boost, talloc, proot for Android ARM64 (robust, empty replace.h workaround)
 
 on:
   workflow_dispatch:
@@ -55,8 +55,7 @@ jobs:
 
       - name: Bootstrap Boost.Build
         working-directory: ./boost_1_83_0
-        run: |
-          ./bootstrap.sh --with-toolset=clang
+        run: ./bootstrap.sh --with-toolset=clang
 
       - name: Build Boost for Android arm64-v8a
         working-directory: ./boost_1_83_0
@@ -94,20 +93,20 @@ jobs:
             -d+2 install -j$(nproc)
 
       - name: Package Boost artifacts
-        run: |
-          tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
+        run: tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC: только talloc.c и talloc.h (без lib/replace) ---
+      # --- TALLOC: empty replace.h workaround ---
       - name: Download and extract talloc
         run: |
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android ARM64 (no lib/replace, robust)
+      - name: Build talloc for Android ARM64 (empty replace.h)
         run: |
           set -xe
           cd talloc-2.4.2
-          # Просто компилируем talloc.c (replace.h не нужен для proot/anabox)
+          # Подкладываем пустой replace.h, чтобы talloc.c не ругался
+          touch replace.h
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -126,32 +125,29 @@ jobs:
           ls -al install/lib
 
       - name: Package talloc artifacts
-        run: |
-          tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
+        run: tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
 
       # --- PROOT ---
       - name: Clone proot
-        run: |
-          git clone --depth=1 https://github.com/Ananbox/proot.git proot
+        run: git clone --depth=1 https://github.com/Ananbox/proot.git proot
 
-      - name: Patch proot for Android bionic basename
+      - name: Patch proot for Android bionic basename (no heredoc)
         run: |
           set -e
           cd proot
-          # Write the basename_patch.h file using a YAML multiline string
-          cat > basename_patch.h << 'END_OF_FILE'
-          #ifdef __ANDROID__
+          # Write basename_patch.h without heredoc using echo and here-string
+          echo '#ifdef __ANDROID__
           #include <string.h>
 
           static char *basename(char *path) {
-              if (!path || *path == '\0') {
+              if (!path || *path == '\''\0'\'') {
                   return path;
               }
 
               int last_slash = -1;
               int i = 0;
-              while (path[i] != '\0') {
-                  if (path[i] == '/') {
+              while (path[i] != '\''\0'\'') {
+                  if (path[i] == '\''/'\'') {
                       last_slash = i;
                   }
                   i++;
@@ -164,8 +160,7 @@ jobs:
           }
           #else
           #include <libgen.h>
-          #endif
-          END_OF_FILE
+          #endif' > basename_patch.h
           PATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)
           PATCH_LINE=$((PATCH_LINE+1))
           awk "NR==$PATCH_LINE{system(\"cat basename_patch.h\")} 1" src/cli/cli.c > src/cli/cli.c.patched
@@ -184,7 +179,7 @@ jobs:
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$GITHUB_WORKSPACE/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
+          export LDFLAGS="--target=aarch64-linux-android Gaming$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
           export PKG_CONFIG_PATH="$GITHUB_WORKSPACE/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
           make clean || true
@@ -193,8 +188,7 @@ jobs:
           cp -v proot $GITHUB_WORKSPACE/libproot.so || { echo "::error::proot binary not built!"; exit 1; }
 
       - name: Package proot artifacts
-        run: |
-          tar -czvf proot_android_arm64.tar.gz libproot.so
+        run: tar -czvf proot_android_arm64.tar.gz libproot.so
 
       - name: Upload build logs
         if: always()
