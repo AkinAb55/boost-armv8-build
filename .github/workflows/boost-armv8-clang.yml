@@ -111,10 +111,10 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Self-healing talloc build for Android/Ananbox
+      - name: Self-healing talloc build for Android/Ananbox (with verbose log)
         run: |
           #!/usr/bin/env bash
-          set +e # don't exit on error
+          set +e
           cd talloc-2.4.2
 
           # --- Function: auto-repair needed files/pkgs ---
@@ -143,7 +143,7 @@ jobs:
           }
 
           # --- Step 1: Проверка и скачивание нужных файлов ---
-          scan_critical_files
+          scan_critical_files | tee ../talloc_scan_step1.log
 
           repair_file "configure" "https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz"
           if [ ! -f "waf-light" ]; then
@@ -172,7 +172,7 @@ jobs:
           fi
 
           # --- Step 2: Удаление тестов и автопатчинг wscript ---
-          echo "Удаляем тестовые исходники и патчим wscript"
+          echo "Удаляем тестовые исходники и патчим wscript" | tee ../talloc_patch.log
           find . -type f -name "test*.c" -delete || true
           find . -type d -name "test*" -exec rm -rf {} + || true
           if [ -f wscript ]; then
@@ -201,23 +201,23 @@ jobs:
 
           build_ok=0
           for attempt in {1..3}; do
-            echo "Попытка сборки talloc $attempt..."
+            echo "Попытка сборки talloc $attempt..." | tee -a ../talloc_build.log
             chmod +x waf
             ./waf configure \
               --disable-python \
               --without-gettext \
               --prefix=$PWD/install \
-              CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-            ./waf build -v
-            ./waf install
+              CC="$CC" AR="$AR" RANLIB="$RANLIB" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" 2>&1 | tee -a ../talloc_build.log
+            ./waf build -v 2>&1 | tee -a ../talloc_build.log
+            ./waf install 2>&1 | tee -a ../talloc_build.log
             # --- Проверяем наличие результата ---
             if [ -f install/lib/libtalloc.a ] || [ -f install/lib64/libtalloc.a ] || [ -d install ]; then
               echo "talloc успешно собран!"
               build_ok=1
               break
             else
-              echo "Сборка не удалась, пробуем долечить..."
-              scan_critical_files
+              echo "Сборка не удалась, пробуем долечить..." | tee -a ../talloc_build.log
+              scan_critical_files | tee -a ../talloc_build.log
               ensure_install_dir
               # если waflib или waf исчезли — восстанавливаем снова
               if [ ! -f waf ]; then repair_file "waf" "https://waf.io/waf-2.0.25"; fi
@@ -234,7 +234,7 @@ jobs:
           done
           if [ $build_ok -ne 1 ]; then
             echo "Не удалось собрать talloc после 3 попыток, завершаем с ошибкой."
-            scan_critical_files
+            scan_critical_files | tee -a ../talloc_build.log
             exit 1
           fi
 
@@ -243,12 +243,15 @@ jobs:
           set -e
           tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
 
-      - name: Upload talloc build log always
+      - name: Upload talloc build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: talloc_build_log
-          path: talloc-2.4.2/waffile.log
+          name: talloc_build_logs
+          path: |
+            talloc_build.log
+            talloc_patch.log
+            talloc_scan_step1.log
 
       # --- PROOT ---
       - name: Clone proot
@@ -256,24 +259,30 @@ jobs:
           set -e
           git clone --depth=1 https://github.com/Ananbox/proot.git proot
 
-      - name: Patch proot for Android bionic basename
+      - name: Patch proot for Android bionic basename (show script in terminal and log)
         run: |
           set -e
           cd proot
-          sed -i '1i\
-          #ifdef __ANDROID__\n\
-          #include <string.h>\n\
-          static char *basename(const char *path) {\n\
-            char *last_slash = strrchr(path, \'/\');\n\
-            if (last_slash == NULL)\n\
-                return (char *)path;\n\
-            return last_slash + 1;\n\
-          }\n\
-          #else\n\
-          #include <libgen.h>\n\
-          #endif\n' src/cli/cli.c
+          echo 'cat > basename_patch.h <<EOF
+#ifdef __ANDROID__
+#include <string.h>
+static char *basename(const char *path) {
+  char *last_slash = strrchr(path, \'/\');
+  if (last_slash == NULL)
+      return (char *)path;
+  return last_slash + 1;
+}
+#else
+#include <libgen.h>
+#endif
+EOF
+sed -i "1r basename_patch.h" src/cli/cli.c
+cat src/cli/cli.c | head -20
+rm basename_patch.h
+' | tee ../proot_patch_script.sh
+          bash ../proot_patch_script.sh 2>&1 | tee ../proot_patch.log
 
-      - name: Build proot for Android arm64-v8a
+      - name: Build proot for Android arm64-v8a (show in terminal and log)
         run: |
           set -e
           export ANDROID_API=21
@@ -286,14 +295,29 @@ jobs:
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$PWD/../talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$PWD/../talloc-2.4.2/install/lib -ltalloc"
           cd proot/src
-          make clean
-          make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
-          cp -v proot $GITHUB_WORKSPACE/libproot.so
+          {
+            echo "=== make clean ==="
+            make clean
+            echo "=== make build ==="
+            make V=1 CC="$CC" LD="$CC" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+            echo "=== copy result ==="
+            cp -v proot $GITHUB_WORKSPACE/libproot.so
+          } 2>&1 | tee ../../proot_build.log
 
       - name: Package proot artifacts
         run: |
           set -e
           tar -czvf proot_android_arm64.tar.gz libproot.so
+
+      - name: Upload proot build and patch logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proot_logs
+          path: |
+            proot_patch.log
+            proot_patch_script.sh
+            proot_build.log
 
       # --- FINAL ARTIFACTS ---
       - name: Upload Boost artifact
@@ -313,4 +337,3 @@ jobs:
         with:
           name: proot_android_arm64
           path: proot_android_arm64.tar.gz
-          
