@@ -101,7 +101,7 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android ARM64 (empty replace.h, fixed version/bool)
+      - name: Build talloc for Android ARM64 (empty replace.h, fixed version/bool/errno/MIN)
         run: |
           set -xe
           cd talloc-2.4.2
@@ -116,7 +116,7 @@ jobs:
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID \
             -DTALLOC_BUILD_VERSION_MAJOR=2 -DTALLOC_BUILD_VERSION_MINOR=4 -DTALLOC_BUILD_VERSION_RELEASE=2 \
-            -include stdbool.h -include string.h"
+            -include stdbool.h -include string.h -include errno.h -include limits.h -include sys/param.h -DMIN(a,b)=((a)<(b)?(a):(b))"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           mkdir -p install/include install/lib
           $CC $CFLAGS -c talloc.c -o talloc.o
