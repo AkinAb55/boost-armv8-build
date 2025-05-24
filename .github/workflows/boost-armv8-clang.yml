@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (robust python hack)
+name: Build Boost, talloc, proot for Android ARM64 (robust python hack, safe Makefile)
 
 on:
   workflow_dispatch:
@@ -39,7 +39,6 @@ jobs:
           echo "ANDROID_NDK_HOME=$HOME/android-ndk" >> $GITHUB_ENV
           echo "PATH=$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
-      # --- BOOST ---
       - name: Download Boost source
         run: |
           wget -O boost-1.83.0.tar.xz https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.xz
@@ -145,20 +144,45 @@ jobs:
           # Удаляем python extension полностью!
           rm -rf proot/src/extension/python
 
-      - name: Patch proot GNUmakefile to remove all python/proot_wrap/proot.i targets
+      # Полная замена Makefile на безопасный минимальный для сборки proot
+      - name: Overwrite GNUmakefile with safe minimal version
         run: |
-          sed -i '/extension\/python\//d' proot/src/GNUmakefile
-          sed -i '/proot_wrap/d' proot/src/GNUmakefile
-          sed -i '/python_extension/d' proot/src/GNUmakefile
-          sed -i '/proot\.i/d' proot/src/GNUmakefile
-          sed -i '${/^$/d;}' proot/src/GNUmakefile
+          cat > proot/src/GNUmakefile <<'EOF'
+VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
+SRC    = $(dir $(firstword $(MAKEFILE_LIST)))
 
-      # Если make всё равно требует файлы - создаём их пустыми (заглушка)
-      - name: Create python/proot_wrap stubs if needed (safety net)
-        run: |
-          mkdir -p proot/src/extension/python
-          touch proot/src/extension/python/proot.i
-          touch proot/src/proot_wrap.c
+CC ?= gcc
+LD ?= $(CC)
+AR ?= ar
+RANLIB ?= ranlib
+CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH) -I$(VPATH)/../lib/uthash/include
+CFLAGS   += -g -Wall -Wextra -O2
+CFLAGS   += $(shell pkg-config --cflags talloc)
+LDFLAGS  += -Wl,-z,noexecstack
+LDFLAGS  += $(shell pkg-config --libs talloc)
+
+OBJECTS += \
+	cli/cli.o cli/proot.o cli/note.o \
+	execve/enter.o execve/exit.o execve/shebang.o execve/elf.o execve/ldso.o execve/auxv.o execve/aoxp.o \
+	path/binding.o path/glue.o path/canon.o path/path.o path/proc.o path/temp.o \
+	syscall/seccomp.o syscall/syscall.o syscall/chain.o syscall/enter.o syscall/exit.o syscall/sysnum.o syscall/socket.o syscall/heap.o syscall/rlimit.o \
+	tracee/tracee.o tracee/mem.o tracee/reg.o tracee/event.o \
+	ptrace/ptrace.o ptrace/user.o ptrace/wait.o \
+	extension/extension.o extension/kompat/kompat.o extension/fake_id0/fake_id0.o extension/link2symlink/link2symlink.o extension/portmap/portmap.o extension/portmap/map.o loader/loader-wrapped.o
+
+.DEFAULT_GOAL = proot
+all: proot
+
+proot: $(OBJECTS)
+	$(LD) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
+
+clean:
+	rm -f $(OBJECTS) proot
+EOF
 
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
