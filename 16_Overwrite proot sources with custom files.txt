@@ -1,0 +1,69 @@
+﻿2025-05-24T17:18:18.0800078Z ##[group]Run wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c   -O proot/src/path/binding.c
+2025-05-24T17:18:18.0800949Z [36;1mwget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c   -O proot/src/path/binding.c[0m
+2025-05-24T17:18:18.0801714Z [36;1mwget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.h   -O proot/src/path/binding.h[0m
+2025-05-24T17:18:18.0802451Z [36;1mwget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/enter.c     -O proot/src/syscall/enter.c[0m
+2025-05-24T17:18:18.0803183Z [36;1mwget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/ptrace.c    -O proot/src/ptrace/ptrace.c[0m
+2025-05-24T17:18:18.0803904Z [36;1mwget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/mem.h       -O proot/src/tracee/mem.h[0m
+2025-05-24T17:18:18.0804438Z [36;1m# Ensure mem.h is included in tracee.c for peek_word[0m
+2025-05-24T17:18:18.0804785Z [36;1mgrep -q 'tracee/mem.h' proot/src/tracee/tracee.c || \[0m
+2025-05-24T17:18:18.0805562Z [36;1m  sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c[0m
+2025-05-24T17:18:18.0851431Z shell: /usr/bin/bash -e {0}
+2025-05-24T17:18:18.0851650Z env:
+2025-05-24T17:18:18.0851834Z   ANDROID_NDK_HOME: /home/runner/android-ndk
+2025-05-24T17:18:18.0853013Z   PATH: /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+2025-05-24T17:18:18.0854179Z ##[endgroup]
+2025-05-24T17:18:18.0940096Z --2025-05-24 17:18:18--  https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c
+2025-05-24T17:18:18.0985630Z Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+2025-05-24T17:18:18.1005612Z Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+2025-05-24T17:18:18.3065289Z HTTP request sent, awaiting response... 200 OK
+2025-05-24T17:18:18.3066060Z Length: 21054 (21K) [text/plain]
+2025-05-24T17:18:18.3066923Z Saving to: ‘proot/src/path/binding.c’
+2025-05-24T17:18:18.3067469Z 
+2025-05-24T17:18:18.3068440Z      0K .......... ..........                                 100% 64.9M=0s
+2025-05-24T17:18:18.3068863Z 
+2025-05-24T17:18:18.3069599Z 2025-05-24 17:18:18 (64.9 MB/s) - ‘proot/src/path/binding.c’ saved [21054/21054]
+2025-05-24T17:18:18.3070046Z 
+2025-05-24T17:18:18.3108444Z --2025-05-24 17:18:18--  https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.h
+2025-05-24T17:18:18.3133874Z Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.109.133, 185.199.108.133, ...
+2025-05-24T17:18:18.3156702Z Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
+2025-05-24T17:18:18.4177312Z HTTP request sent, awaiting response... 200 OK
+2025-05-24T17:18:18.4178049Z Length: 1997 (2.0K) [text/plain]
+2025-05-24T17:18:18.4178802Z Saving to: ‘proot/src/path/binding.h’
+2025-05-24T17:18:18.4179146Z 
+2025-05-24T17:18:18.4179330Z      0K .                                                     100% 22.4M=0s
+2025-05-24T17:18:18.4179709Z 
+2025-05-24T17:18:18.4180167Z 2025-05-24 17:18:18 (22.4 MB/s) - ‘proot/src/path/binding.h’ saved [1997/1997]
+2025-05-24T17:18:18.4181142Z 
+2025-05-24T17:18:18.4217104Z --2025-05-24 17:18:18--  https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/enter.c
+2025-05-24T17:18:18.4245737Z Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.108.133, ...
+2025-05-24T17:18:18.4265257Z Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
+2025-05-24T17:18:18.5335212Z HTTP request sent, awaiting response... 200 OK
+2025-05-24T17:18:18.5336390Z Length: 15385 (15K) [text/plain]
+2025-05-24T17:18:18.5337222Z Saving to: ‘proot/src/syscall/enter.c’
+2025-05-24T17:18:18.5337636Z 
+2025-05-24T17:18:18.5339719Z      0K .......... .....                                      100% 59.4M=0s
+2025-05-24T17:18:18.5340368Z 
+2025-05-24T17:18:18.5340882Z 2025-05-24 17:18:18 (59.4 MB/s) - ‘proot/src/syscall/enter.c’ saved [15385/15385]
+2025-05-24T17:18:18.5341390Z 
+2025-05-24T17:18:18.5376198Z --2025-05-24 17:18:18--  https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/ptrace.c
+2025-05-24T17:18:18.5401553Z Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.111.133, ...
+2025-05-24T17:18:18.5429492Z Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
+2025-05-24T17:18:18.6699037Z HTTP request sent, awaiting response... 200 OK
+2025-05-24T17:18:18.6699807Z Length: 17332 (17K) [text/plain]
+2025-05-24T17:18:18.6700717Z Saving to: ‘proot/src/ptrace/ptrace.c’
+2025-05-24T17:18:18.6701038Z 
+2025-05-24T17:18:18.6701496Z      0K .......... ......                                     100% 59.7M=0s
+2025-05-24T17:18:18.6702273Z 
+2025-05-24T17:18:18.6702776Z 2025-05-24 17:18:18 (59.7 MB/s) - ‘proot/src/ptrace/ptrace.c’ saved [17332/17332]
+2025-05-24T17:18:18.6703122Z 
+2025-05-24T17:18:18.6739991Z --2025-05-24 17:18:18--  https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/mem.h
+2025-05-24T17:18:18.6766515Z Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
+2025-05-24T17:18:18.6784744Z Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+2025-05-24T17:18:18.7811232Z HTTP request sent, awaiting response... 200 OK
+2025-05-24T17:18:18.7811981Z Length: 3744 (3.7K) [text/plain]
+2025-05-24T17:18:18.7812843Z Saving to: ‘proot/src/tracee/mem.h’
+2025-05-24T17:18:18.7813264Z 
+2025-05-24T17:18:18.7813494Z      0K ...                                                   100% 40.9M=0s
+2025-05-24T17:18:18.7814010Z 
+2025-05-24T17:18:18.7814498Z 2025-05-24 17:18:18 (40.9 MB/s) - ‘proot/src/tracee/mem.h’ saved [3744/3744]
+2025-05-24T17:18:18.7814839Z 

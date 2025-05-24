@@ -1,0 +1,66 @@
+﻿2025-05-24T17:18:18.7883531Z ##[group]Run set -e
+2025-05-24T17:18:18.7883790Z [36;1mset -e[0m
+2025-05-24T17:18:18.7883956Z [36;1mcd proot[0m
+2025-05-24T17:18:18.7884137Z [36;1mecho '#ifdef __ANDROID__[0m
+2025-05-24T17:18:18.7884361Z [36;1m#include <string.h>[0m
+2025-05-24T17:18:18.7884603Z [36;1mstatic char *basename(char *path) {[0m
+2025-05-24T17:18:18.7884865Z [36;1m    if (!path || *path == '\''\0'\'') {[0m
+2025-05-24T17:18:18.7885364Z [36;1m        return path;[0m
+2025-05-24T17:18:18.7885558Z [36;1m    }[0m
+2025-05-24T17:18:18.7885732Z [36;1m    int last_slash = -1;[0m
+2025-05-24T17:18:18.7885937Z [36;1m    int i = 0;[0m
+2025-05-24T17:18:18.7886138Z [36;1m    while (path[i] != '\''\0'\'') {[0m
+2025-05-24T17:18:18.7886379Z [36;1m        if (path[i] == '\''/'\'') {[0m
+2025-05-24T17:18:18.7886602Z [36;1m            last_slash = i;[0m
+2025-05-24T17:18:18.7886810Z [36;1m        }[0m
+2025-05-24T17:18:18.7886978Z [36;1m        i++;[0m
+2025-05-24T17:18:18.7887146Z [36;1m    }[0m
+2025-05-24T17:18:18.7887312Z [36;1m    if (last_slash != -1) {[0m
+2025-05-24T17:18:18.7887567Z [36;1m        return path + last_slash + 1;[0m
+2025-05-24T17:18:18.7887796Z [36;1m    }[0m
+2025-05-24T17:18:18.7887954Z [36;1m    return path;[0m
+2025-05-24T17:18:18.7888137Z [36;1m}[0m
+2025-05-24T17:18:18.7888398Z [36;1m#else[0m
+2025-05-24T17:18:18.7888563Z [36;1m#include <libgen.h>[0m
+2025-05-24T17:18:18.7888775Z [36;1m#endif' > basename_patch.h[0m
+2025-05-24T17:18:18.7889085Z [36;1mPATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)[0m
+2025-05-24T17:18:18.7889424Z [36;1mPATCH_LINE=$((PATCH_LINE+1))[0m
+2025-05-24T17:18:18.7889807Z [36;1mawk "NR==$PATCH_LINE{system(\"cat basename_patch.h\")} 1" src/cli/cli.c > src/cli/cli.c.patched[0m
+2025-05-24T17:18:18.7890232Z [36;1mmv src/cli/cli.c.patched src/cli/cli.c[0m
+2025-05-24T17:18:18.7890483Z [36;1mrm basename_patch.h[0m
+2025-05-24T17:18:18.7890775Z [36;1mcat src/cli/cli.c | head -30 | tee ../proot_patch_preview.log[0m
+2025-05-24T17:18:18.7936234Z shell: /usr/bin/bash -e {0}
+2025-05-24T17:18:18.7936472Z env:
+2025-05-24T17:18:18.7936657Z   ANDROID_NDK_HOME: /home/runner/android-ndk
+2025-05-24T17:18:18.7937853Z   PATH: /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+2025-05-24T17:18:18.7939024Z ##[endgroup]
+2025-05-24T17:18:18.8240350Z /* -*- c-set-style: "K&R"; c-basic-offset: 8 -*-
+2025-05-24T17:18:18.8240859Z  *
+2025-05-24T17:18:18.8241067Z  * This file is part of PRoot.
+2025-05-24T17:18:18.8241276Z  *
+2025-05-24T17:18:18.8241445Z  * Copyright (C) 2015 STMicroelectronics
+2025-05-24T17:18:18.8241673Z  *
+2025-05-24T17:18:18.8241907Z  * This program is free software; you can redistribute it and/or
+2025-05-24T17:18:18.8242449Z  * modify it under the terms of the GNU General Public License as
+2025-05-24T17:18:18.8242973Z  * published by the Free Software Foundation; either version 2 of the
+2025-05-24T17:18:18.8243561Z  * License, or (at your option) any later version.
+2025-05-24T17:18:18.8243975Z  *
+2025-05-24T17:18:18.8244359Z  * This program is distributed in the hope that it will be useful, but
+2025-05-24T17:18:18.8245163Z  * WITHOUT ANY WARRANTY; without even the implied warranty of
+2025-05-24T17:18:18.8245719Z  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+2025-05-24T17:18:18.8246089Z  * General Public License for more details.
+2025-05-24T17:18:18.8246334Z  *
+2025-05-24T17:18:18.8246573Z  * You should have received a copy of the GNU General Public License
+2025-05-24T17:18:18.8246968Z  * along with this program; if not, write to the Free Software
+2025-05-24T17:18:18.8247343Z  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+2025-05-24T17:18:18.8247658Z  * 02110-1301 USA.
+2025-05-24T17:18:18.8247828Z  */
+2025-05-24T17:18:18.8247913Z 
+2025-05-24T17:18:18.8248222Z #include <stdio.h>         /* printf(3), */
+2025-05-24T17:18:18.8248469Z #ifdef __ANDROID__
+2025-05-24T17:18:18.8248644Z #include <string.h>
+2025-05-24T17:18:18.8248838Z static char *basename(char *path) {
+2025-05-24T17:18:18.8249073Z     if (!path || *path == '\0') {
+2025-05-24T17:18:18.8249295Z         return path;
+2025-05-24T17:18:18.8249466Z     }
+2025-05-24T17:18:18.8249630Z     int last_slash = -1;

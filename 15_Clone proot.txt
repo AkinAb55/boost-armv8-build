@@ -1,0 +1,8 @@
+﻿2025-05-24T17:18:17.7037399Z ##[group]Run git clone --depth=1 https://github.com/Ananbox/proot.git proot
+2025-05-24T17:18:17.7038282Z [36;1mgit clone --depth=1 https://github.com/Ananbox/proot.git proot[0m
+2025-05-24T17:18:17.7090301Z shell: /usr/bin/bash -e {0}
+2025-05-24T17:18:17.7090528Z env:
+2025-05-24T17:18:17.7090720Z   ANDROID_NDK_HOME: /home/runner/android-ndk
+2025-05-24T17:18:17.7092842Z   PATH: /home/runner/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+2025-05-24T17:18:17.7094878Z ##[endgroup]
+2025-05-24T17:18:17.7170190Z Cloning into 'proot'...
