@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (robust, pythonless, safe Makefile)
+name: Build Boost, talloc, proot for Android ARM64
 
 on:
   workflow_dispatch:
@@ -125,6 +125,22 @@ jobs:
           ls -al install/include
           ls -al install/lib
 
+      - name: Create talloc.pc for pkg-config
+        run: |
+          mkdir -p talloc-2.4.2/install/lib/pkgconfig
+          cat > talloc-2.4.2/install/lib/pkgconfig/talloc.pc << 'EOF'
+            prefix=${pcfiledir}/../..
+            exec_prefix=${prefix}
+            libdir=${exec_prefix}/lib
+            includedir=${prefix}/include
+
+            Name: talloc
+            Description: Hierarchical pool based memory allocator with destructors
+            Version: 2.4.2
+            Libs: -L${libdir} -ltalloc
+            Cflags: -I${includedir}
+          EOF
+
       - name: Package talloc artifacts
         run: tar -czvf talloc_android_arm64.tar.gz -C talloc-2.4.2/install .
 
@@ -143,8 +159,7 @@ jobs:
             sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
           rm -rf proot/src/extension/python
 
-      # Полная замена Makefile - только TAB для команд!
-      - name: Overwrite GNUmakefile with safe minimal version
+      - name: Overwrite GNUmakefile with safe minimal version (with TABs)
         run: |
           cat > proot/src/GNUmakefile << 'EOF'
           VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
