@@ -134,12 +134,14 @@ jobs:
 
       - name: Overwrite proot sources with custom files
         run: |
-          # Скачиваем ваши кастомные файлы из вашего репозитория
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c   -O proot/src/path/binding.c
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.h   -O proot/src/path/binding.h
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/enter.c     -O proot/src/syscall/enter.c
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/ptrace.c    -O proot/src/ptrace/ptrace.c
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/mem.h       -O proot/src/tracee/mem.h
+          # Ensure mem.h is included in tracee.c for peek_word
+          grep -q 'tracee/mem.h' proot/src/tracee/tracee.c || \
+            sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
 
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
