@@ -114,12 +114,58 @@ jobs:
           # Копируем config.h в lib/replace
           cp config.h lib/replace/
 
-          # Патчим replace.h, чтобы избежать конфликтов
-          sed -i '/typedef long long intptr_t;/d' lib/replace/replace.h
-          sed -i '/typedef unsigned long long uintptr_t;/d' lib/replace/replace.h
-          sed -i '/typedef unsigned long long ptrdiff_t;/d' lib/replace/replace.h
-          sed -i '/typedef long useconds_t;/d' lib/replace/replace.h
-          echo "#ifndef RTLD_DEFAULT\n#define RTLD_DEFAULT ((void *)0)\n#endif" >> lib/replace/replace.h
+          # Предварительный анализ и вывод содержимого файлов
+          echo "=== Original replace.h ==="
+          cat lib/replace/replace.h
+          echo "=== End of replace.h ==="
+          echo "=== Original .c files in lib/replace ==="
+          for file in lib/replace/*.c; do
+            echo "Content of $file:"
+            cat "$file"
+            echo "-------------------"
+          done
+
+          # Анализ содержимого для динамического патча
+          echo "Analyzing replace.h for typedef conflicts..."
+          PATTERNS=()
+          if grep -q "typedef.*intptr_t" lib/replace/replace.h; then
+            PATTERNS+=("typedef.*intptr_t")
+          fi
+          if grep -q "typedef.*uintptr_t" lib/replace/replace.h; then
+            PATTERNS+=("typedef.*uintptr_t")
+          fi
+          if grep -q "typedef.*ptrdiff_t" lib/replace/replace.h; then
+            PATTERNS+=("typedef.*ptrdiff_t")
+          fi
+          if grep -q "typedef.*useconds_t" lib/replace/replace.h; then
+            PATTERNS+=("typedef.*useconds_t")
+          fi
+          RTLD_NEEDED=false
+          for file in lib/replace/*.c; do
+            if grep -q "RTLD_DEFAULT" "$file"; then
+              RTLD_NEEDED=true
+              break
+            fi
+          done
+
+          # Применение патча на основе анализа
+          if [ ${#PATTERNS[@]} -gt 0 ]; then
+            echo "Patching replace.h to remove conflicting typedefs: ${PATTERNS[*]}"
+            for pattern in "${PATTERNS[@]}"; do
+              sed -i "/$pattern/d" lib/replace/replace.h
+            done
+          fi
+          if [ "$RTLD_NEEDED" = true ]; then
+            echo "Adding RTLD_DEFAULT definition to replace.h"
+            echo "#ifndef RTLD_DEFAULT" >> lib/replace/replace.h
+            echo "#define RTLD_DEFAULT ((void *)0)" >> lib/replace/replace.h
+            echo "#endif" >> lib/replace/replace.h
+          fi
+
+          # Вывод патched replace.h
+          echo "=== Patched replace.h ==="
+          cat lib/replace/replace.h
+          echo "=== End of patched replace.h ==="
 
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
@@ -128,7 +174,7 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -I$PWD -I$PWD/lib/replace"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID -I$PWD -I$PWD/lib/replace -std=c99"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
 
           mkdir -p install/include install/lib
