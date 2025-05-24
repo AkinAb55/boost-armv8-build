@@ -101,7 +101,7 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android ARM64 (empty replace.h)
+      - name: Build talloc for Android ARM64 (empty replace.h, fixed version/bool)
         run: |
           set -xe
           cd talloc-2.4.2
@@ -114,7 +114,9 @@ jobs:
           export CC="$TOOLCHAIN/aarch64-linux-android$ANDROID_API-clang"
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
-          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
+          export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID \
+            -DTALLOC_BUILD_VERSION_MAJOR=2 -DTALLOC_BUILD_VERSION_MINOR=4 -DTALLOC_BUILD_VERSION_RELEASE=2 \
+            -include stdbool.h -include string.h"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
           mkdir -p install/include install/lib
           $CC $CFLAGS -c talloc.c -o talloc.o
@@ -138,12 +140,10 @@ jobs:
           # Write basename_patch.h without heredoc using echo and here-string
           echo '#ifdef __ANDROID__
           #include <string.h>
-
           static char *basename(char *path) {
               if (!path || *path == '\''\0'\'') {
                   return path;
               }
-
               int last_slash = -1;
               int i = 0;
               while (path[i] != '\''\0'\'') {
@@ -152,7 +152,6 @@ jobs:
                   }
                   i++;
               }
-
               if (last_slash != -1) {
                   return path + last_slash + 1;
               }
@@ -179,7 +178,7 @@ jobs:
           export AR="$TOOLCHAIN/llvm-ar"
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -I$GITHUB_WORKSPACE/talloc-2.4.2/install/include -DANDROID -Wno-deprecated-declarations"
-          export LDFLAGS="--target=aarch64-linux-android Gaming$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
+          export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
           export PKG_CONFIG_PATH="$GITHUB_WORKSPACE/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
           make clean || true
