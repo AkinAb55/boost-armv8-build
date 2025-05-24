@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (custom proot sources)
+name: Build Boost, talloc, proot for Android ARM64 (custom proot sources, no python ext)
 
 on:
   workflow_dispatch:
@@ -191,7 +191,7 @@ jobs:
           export PKG_CONFIG_PATH="$GITHUB_WORKSPACE/talloc-2.4.2/install/lib/pkgconfig:$PKG_CONFIG_PATH"
           cd proot/src
           make clean || true
-          make V=1 CC="$CC" LD="$CC" AR="$AR" RANLIB="$RANLIB" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > ../../proot_build.log 2>&1 || { tail -100 ../../proot_build.log; exit 1; }
+          make NO_PYTHON=1 V=1 CC="$CC" LD="$CC" AR="$AR" RANLIB="$RANLIB" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > ../../proot_build.log 2>&1 || { tail -100 ../../proot_build.log; exit 1; }
           file proot || true
           cp -v proot $GITHUB_WORKSPACE/libproot.so || { echo "::error::proot binary not built!"; exit 1; }
 
