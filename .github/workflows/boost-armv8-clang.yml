@@ -104,7 +104,7 @@ jobs:
           set -e
           tar -czvf boost_android_arm64.tar.gz boost_android_arm64_install
 
-      # --- TALLOC (self-healing, auto-repair, recovery logic) ---
+      # --- TALLOC (self-healing, full log) ---
       - name: Download and extract talloc
         run: |
           set -e
@@ -263,11 +263,11 @@ jobs:
         run: |
           set -e
           cd proot
-          echo 'cat > basename_patch.h <<EOF
+          cat <<EOF > basename_patch.h
 #ifdef __ANDROID__
 #include <string.h>
 static char *basename(const char *path) {
-  char *last_slash = strrchr(path, \'/\');
+  char *last_slash = strrchr(path, '/');
   if (last_slash == NULL)
       return (char *)path;
   return last_slash + 1;
@@ -276,11 +276,9 @@ static char *basename(const char *path) {
 #include <libgen.h>
 #endif
 EOF
-sed -i "1r basename_patch.h" src/cli/cli.c
-cat src/cli/cli.c | head -20
-rm basename_patch.h
-' | tee ../proot_patch_script.sh
-          bash ../proot_patch_script.sh 2>&1 | tee ../proot_patch.log
+          sed -i "1r basename_patch.h" src/cli/cli.c
+          cat src/cli/cli.c | head -20 | tee ../proot_patch_preview.log
+          rm basename_patch.h
 
       - name: Build proot for Android arm64-v8a (show in terminal and log)
         run: |
@@ -315,8 +313,7 @@ rm basename_patch.h
         with:
           name: proot_logs
           path: |
-            proot_patch.log
-            proot_patch_script.sh
+            proot_patch_preview.log
             proot_build.log
 
       # --- FINAL ARTIFACTS ---
