@@ -137,7 +137,7 @@ jobs:
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.c   -O proot/src/path/binding.c
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/binding.h   -O proot/src/path/binding.h
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/enter.c     -O proot/src/syscall/enter.c
-          wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/ptrace.c    -O proot/src/ptrace/ptrace.c
+          wget https://raw.githubusercontent.com/A-dnAb55/boost-armv8-build/main/ptrace.c    -O proot/src/ptrace/ptrace.c
           wget https://raw.githubusercontent.com/AkinAb55/boost-armv8-build/main/mem.h       -O proot/src/tracee/mem.h
           grep -q 'tracee/mem.h' proot/src/tracee/tracee.c || \
             sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
@@ -146,36 +146,36 @@ jobs:
       # Полная замена Makefile!
       - name: Overwrite GNUmakefile with safe minimal version
         run: |
-          cat <<'EOF' > proot/src/GNUmakefile
-VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
-SRC    = $(dir $(firstword $(MAKEFILE_LIST)))
-CC ?= gcc
-LD ?= $(CC)
-AR ?= ar
-RANLIB ?= ranlib
-CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH) -I$(VPATH)/../lib/uthash/include
-CFLAGS   += -g -Wall -Wextra -O2
-CFLAGS   += $(shell pkg-config --cflags talloc)
-LDFLAGS  += -Wl,-z,noexecstack
-LDFLAGS  += $(shell pkg-config --libs talloc)
-OBJECTS += \
-	cli/cli.o cli/proot.o cli/note.o \
-	execve/enter.o execve/exit.o execve/shebang.o execve/elf.o execve/ldso.o execve/auxv.o execve/aoxp.o \
-	path/binding.o path/glue.o path/canon.o path/path.o path/proc.o path/temp.o \
-	syscall/seccomp.o syscall/syscall.o syscall/chain.o syscall/enter.o syscall/exit.o syscall/sysnum.o syscall/socket.o syscall/heap.o syscall/rlimit.o \
-	tracee/tracee.o tracee/mem.o tracee/reg.o tracee/event.o \
-	ptrace/ptrace.o ptrace/user.o ptrace/wait.o \
-	extension/extension.o extension/kompat/kompat.o extension/fake_id0/fake_id0.o extension/link2symlink/link2symlink.o extension/portmap/portmap.o extension/portmap/map.o loader/loader-wrapped.o
-.DEFAULT_GOAL = proot
-all: proot
-proot: $(OBJECTS)
-	$(LD) -o $@ $^ $(LDFLAGS)
-%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
-clean:
-	rm -f $(OBJECTS) proot
-EOF
+          cat > proot/src/GNUmakefile << 'EOF'
+          VPATH := $(dir $(lastword $(MAKEFILE_LIST)))
+          SRC    = $(dir $(firstword $(MAKEFILE_LIST)))
+          CC ?= gcc
+          LD ?= $(CC)
+          AR ?= ar
+          RANLIB ?= ranlib
+          CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH) -I$(VPATH)/../lib/uthash/include
+          CFLAGS   += -g -Wall -Wextra -O2
+          CFLAGS   += $(shell pkg-config --cflags talloc)
+          LDFLAGS  += -Wl,-z,noexecstack
+          LDFLAGS  += $(shell pkg-config --libs talloc)
+          OBJECTS += \
+                  cli/cli.o cli/proot.o cli/note.o \
+                  execve/enter.o execve/exit.o execve/shebang.o execve/elf.o execve/ldso.o execve/auxv.o execve/aoxp.o \
+                  path/binding.o path/glue.o path/canon.o path/path.o path/proc.o path/temp.o \
+                  syscall/seccomp.o syscall/syscall.o syscall/chain.o syscall/enter.o syscall/exit.o syscall/sysnum.o syscall/socket.o syscall/heap.o syscall/rlimit.o \
+                  tracee/tracee.o tracee/mem.o tracee/reg.o tracee/event.o \
+                  ptrace/ptrace.o ptrace/user.o ptrace/wait.o \
+                  extension/extension.o extension/kompat/kompat.o extension/fake_id0/fake_id0.o extension/link2symlink/link2symlink.o extension/portmap/portmap.o extension/portmap/map.o loader/loader-wrapped.o
+          .DEFAULT_GOAL = proot
+          all: proot
+          proot: $(OBJECTS)
+                  $(LD) -o $@ $^ $(LDFLAGS)
+          %.o: %.c
+                  @mkdir -p $(dir $@)
+                  $(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
+          clean:
+                  rm -f $(OBJECTS) proot
+          EOF
 
       - name: Patch proot for Android bionic basename (no heredoc)
         run: |
