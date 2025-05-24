@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (robust no-python, safe Makefile)
+name: Build Boost, talloc, proot for Android ARM64 (robust, pythonless, safe Makefile)
 
 on:
   workflow_dispatch:
@@ -143,7 +143,7 @@ jobs:
             sed -i '/#include "tracee\/tracee.h"/a #include "tracee/mem.h"' proot/src/tracee/tracee.c
           rm -rf proot/src/extension/python
 
-      # Полная замена Makefile!
+      # Полная замена Makefile - только TAB для команд!
       - name: Overwrite GNUmakefile with safe minimal version
         run: |
           cat > proot/src/GNUmakefile << 'EOF'
@@ -169,12 +169,12 @@ jobs:
           .DEFAULT_GOAL = proot
           all: proot
           proot: $(OBJECTS)
-                  $(LD) -o $@ $^ $(LDFLAGS)
+          <TAB>$(LD) -o $@ $^ $(LDFLAGS)
           %.o: %.c
-                  @mkdir -p $(dir $@)
-                  $(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
+          <TAB>@mkdir -p $(dir $@)
+          <TAB>$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $(SRC)$< -o $@
           clean:
-                  rm -f $(OBJECTS) proot
+          <TAB>rm -f $(OBJECTS) proot
           EOF
 
       - name: Patch proot for Android bionic basename (no heredoc)
