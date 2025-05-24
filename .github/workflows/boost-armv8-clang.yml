@@ -262,26 +262,32 @@ jobs:
       - name: Patch proot for Android bionic basename (show script in terminal and log)
         run: |
           set -e
+          cat > patch_proot.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -e
           cd proot
-          cat <<'EOF' > basename_patch.h
-#ifdef __ANDROID__
-#include <string.h>
-static char *basename(char *path) {
-  char *last_slash;
-  if (path == NULL || *path == '\0')
-    return path;
-  last_slash = strrchr(path, '/');
-  if (last_slash != NULL)
-    return last_slash + 1;
-  return path;
-}
-#else
-#include <libgen.h>
-#endif
-EOF
+          cat <<'INNER_EOF' > basename_patch.h
+          #ifdef __ANDROID__
+          #include <string.h>
+          static char *basename(char *path) {
+            char *last_slash;
+            if (path == NULL || *path == '\0')
+              return path;
+            last_slash = strrchr(path, '/');
+            if (last_slash != NULL)
+              return last_slash + 1;
+            return path;
+          }
+          #else
+          #include <libgen.h>
+          #endif
+          INNER_EOF
           sed -i "1r basename_patch.h" src/cli/cli.c
           cat src/cli/cli.c | head -20 | tee ../proot_patch_preview.log
           rm basename_patch.h
+          EOF
+          chmod +x patch_proot.sh
+          ./patch_proot.sh
 
       - name: Build proot for Android arm64-v8a (show in terminal and log)
         run: |
@@ -308,7 +314,7 @@ EOF
       - name: Package proot artifacts
         run: |
           set -e
-          tar -czvf proot_android_arm64.tar.gz libproot.so
+          tar - ~= proot_android_arm64.tar.gz libproot.so
 
       - name: Upload proot build and patch logs
         if: always()
