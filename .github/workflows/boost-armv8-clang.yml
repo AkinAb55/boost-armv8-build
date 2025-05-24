@@ -1,4 +1,4 @@
-name: Build Boost, talloc, proot for Android ARM64 (bionic, ananbox compatible)
+name: Build Boost, talloc, proot for Android ARM64 (bionic, ananbox compatible, auto-repair)
 
 on:
   workflow_dispatch:
@@ -111,10 +111,49 @@ jobs:
           wget https://www.samba.org/ftp/talloc/talloc-2.4.2.tar.gz -O talloc-2.4.2.tar.gz
           tar -xf talloc-2.4.2.tar.gz
 
-      - name: Build talloc for Android arm64 (waf only)
+      - name: Auto-generate waf for talloc if missing
         run: |
           set -e
           cd talloc-2.4.2
+          if [ ! -f waf ]; then
+            echo "::group::Generating waf"
+            # Проверяем возможные пути, где может быть waf-light или autogen скрипт
+            if [ -f buildtools/bin/waf-light ]; then
+              cp buildtools/bin/waf-light waf
+              chmod +x waf
+              echo "[INFO] waf-light found and copied."
+            elif [ -f script/autogen-waf ]; then
+              python3 script/autogen-waf
+              echo "[INFO] script/autogen-waf executed."
+            elif [ -f autogen.sh ]; then
+              ./autogen.sh
+              echo "[INFO] autogen.sh executed."
+            else
+              # Попытка скачать waf из интернета, если ничего не найдено
+              wget https://waf.io/waf-2.0.22 -O waf
+              chmod +x waf
+              echo "[WARN] Downloaded waf from waf.io as fallback."
+            fi
+            echo "::endgroup::"
+          else
+            echo "[INFO] waf already present."
+          fi
+          # Проверка после всех попыток
+          if [ ! -f waf ]; then
+            echo "::error::Cannot find or generate waf for talloc!"
+            ls -l
+            exit 1
+          fi
+
+      - name: Build talloc for Android arm64 (auto-find waf)
+        run: |
+          set -e
+          cd talloc-2.4.2
+          # Поиск waf
+          if [ ! -f waf ]; then
+            echo "::error::waf is missing even after generation! Aborting."
+            exit 1
+          fi
           export ANDROID_API=21
           export NDK_HOME="$HOME/android-ndk"
           export TOOLCHAIN="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -124,11 +163,17 @@ jobs:
           export RANLIB="$TOOLCHAIN/llvm-ranlib"
           export CFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -DANDROID"
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC"
-          python3 ./waf configure --disable-python --without-gettext --cross-compile --destdir=install --prefix=/ --cc="$CC" --ar="$AR" --ranlib="$RANLIB" --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS"
-          python3 ./waf build
-          python3 ./waf install
-          ls -l install/lib
-          ls -l install/include
+          echo "::group::Talloc configure"
+          python3 ./waf configure --disable-python --without-gettext --cross-compile --destdir=install --prefix=/ --cc="$CC" --ar="$AR" --ranlib="$RANLIB" --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS" || { cat config.log || true; exit 1; }
+          echo "::endgroup::"
+          echo "::group::Talloc build"
+          python3 ./waf build || { tail -100 build/config.log || true; exit 1; }
+          echo "::endgroup::"
+          echo "::group::Talloc install"
+          python3 ./waf install || { tail -100 build/config.log || true; exit 1; }
+          echo "::endgroup::"
+          ls -l install/lib || true
+          ls -l install/include || true
 
       - name: Package talloc artifacts
         run: |
@@ -167,7 +212,6 @@ jobs:
             #include <libgen.h>
             #endif
           EOF
-          # Вставляем после первой строки #include
           PATCH_LINE=$(grep -n "^#include" src/cli/cli.c | head -1 | cut -d: -f1)
           PATCH_LINE=$((PATCH_LINE+1))
           awk "NR==$PATCH_LINE{system(\"cat basename_patch.h\")} 1" src/cli/cli.c > src/cli/cli.c.patched
@@ -189,9 +233,9 @@ jobs:
           export LDFLAGS="--target=aarch64-linux-android$ANDROID_API --sysroot=$SYSROOT -fPIC -L$GITHUB_WORKSPACE/talloc-2.4.2/install/lib -ltalloc"
           cd proot/src
           make clean
-          make V=1 CC="$CC" LD="$CC" AR="$AR" RANLIB="$RANLIB" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+          make V=1 CC="$CC" LD="$CC" AR="$AR" RANLIB="$RANLIB" STRIP=echo OBJCOPY=echo OBJDUMP=echo CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" > ../../proot_build.log 2>&1 || { tail -100 ../../proot_build.log; exit 1; }
           file proot || true
-          cp -v proot $GITHUB_WORKSPACE/libproot.so
+          cp -v proot $GITHUB_WORKSPACE/libproot.so || { echo "::error::proot binary not built!"; exit 1; }
 
       - name: Package proot artifacts
         run: |
@@ -206,6 +250,8 @@ jobs:
           path: |
             proot_patch_preview.log
             proot_build.log
+            talloc-2.4.2/config.log
+            talloc-2.4.2/build/config.log
 
       # --- FINAL ARTIFACTS ---
       - name: Upload Boost artifact
@@ -225,3 +271,13 @@ jobs:
         with:
           name: proot_android_arm64
           path: proot_android_arm64.tar.gz
+
+      - name: Upload all logs if any error
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error_logs
+          path: |
+            **/*.log
+            talloc-2.4.2/config.log
+            talloc-2.4.2/build/config.log
